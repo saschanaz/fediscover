@@ -1,0 +1,6 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<script type="module">
+  window.opener.postMessage(Object.fromEntries(new URLSearchParams(location.search.slice(1))));
+  close();
+</script>

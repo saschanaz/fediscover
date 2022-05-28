@@ -1,5 +1,11 @@
 import { login } from "./third_party/masto.js";
+import * as idbKeyval from "https://cdn.jsdelivr.net/npm/idb-keyval@6/+esm";
+import html from "https://cdn.jsdelivr.net/npm/nanohtml@1/+esm";
 
+/**
+ * @param {EventTarget} target
+ * @param {string} eventName
+ */
 function eventFired(target, eventName) {
   return new Promise((resolve) => {
     target.addEventListener(
@@ -12,8 +18,13 @@ function eventFired(target, eventName) {
   });
 }
 
-async function authorizeInPopup(clientId, redirectUri) {
-  const url = new URL("https://qdon.space/oauth/authorize");
+/**
+ * @param {string} domain
+ * @param {string} clientId
+ * @param {string} redirectUri
+ */
+async function authorizeInPopup(domain, clientId, redirectUri) {
+  const url = new URL("/oauth/authorize", domain);
   url.searchParams.append("response_type", "code");
   url.searchParams.append("client_id", clientId);
   url.searchParams.append("redirect_uri", redirectUri);
@@ -25,8 +36,15 @@ async function authorizeInPopup(clientId, redirectUri) {
   return ev.data.code;
 }
 
-async function obtainToken(clientId, clientSecret, code, redirectUri) {
-  const url = new URL("https://qdon.space/oauth/token");
+/**
+ * @param {string} domain
+ * @param {string} clientId
+ * @param {string} clientSecret
+ * @param {string} code
+ * @param {string} redirectUri
+ */
+async function obtainToken(domain, clientId, clientSecret, code, redirectUri) {
+  const url = new URL("/oauth/token", domain);
   url.searchParams.append("grant_type", "authorization_code");
   url.searchParams.append("client_id", clientId);
   url.searchParams.append("client_secret", clientSecret);
@@ -39,22 +57,50 @@ async function obtainToken(clientId, clientSecret, code, redirectUri) {
   return json;
 }
 
-globalThis.authorize = async () => {
-  const masto = await login({
-    url: "https://qdon.space",
-  });
+/**
+ * @param {string} domain
+ */
+function sanitizeDomain(domain) {
+  domain = `https://${domain}`;
+  if (new URL(domain).origin !== domain) {
+    throw new Error("Invalid domain URL");
+  }
+  return domain;
+}
 
-  const redirectUri = new URL("redirect.html", location.href).toString();
-  const app = await masto.apps.create({
+/**
+ * @param {import("./third_party/masto.js").MastoClient} masto
+ * @param {string} domain
+ * @param {string} redirectUri
+ */
+async function getAppData(masto, domain, redirectUri) {
+  const app = await idbKeyval.get("app");
+  if (app?.website === domain) {
+    return app;
+  }
+
+  const created = await masto.apps.create({
     clientName: "Mizukidon",
     redirectUris: redirectUri,
     scopes: "read write",
-    website: "https://qdon.space",
+    website: domain,
   });
+  await idbKeyval.set("app", created);
+  return created;
+}
 
-  const code = await authorizeInPopup(app.clientId, redirectUri);
+async function authorize() {
+  const domain = sanitizeDomain(document.getElementById("domainInput").value);
+
+  const masto = await login({ url: domain });
+
+  const redirectUri = new URL("redirect.html", location.href).toString();
+  const app = await getAppData(masto, domain, redirectUri);
+
+  const code = await authorizeInPopup(domain, app.clientId, redirectUri);
 
   const token = await obtainToken(
+    domain,
     app.clientId,
     app.clientSecret,
     code,
@@ -63,7 +109,17 @@ globalThis.authorize = async () => {
 
   masto.config.accessToken = token.access_token;
 
-  masto.statuses.create({
-    status: "Hello, world!",
-  });
-};
+  idbKeyval.set("accessToken", token.access_token);
+}
+
+async function main() {
+  const [domain, token] = await idbKeyval.getMany(["domain", "accessToken"]);
+  if (!domain || !token) {
+    document.body.append(html`
+      <label>Domain: <input id="domainInput" placeholder="example.com" /></label>
+      <button onclick=${authorize}>Authorize</button>
+    `);
+  }
+}
+
+await main();

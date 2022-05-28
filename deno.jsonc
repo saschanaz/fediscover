@@ -2,5 +2,8 @@
   "tasks": {
     "bundle:mastojs": "deno bundle https://raw.githubusercontent.com/saschanaz/masto.js/main/src/entrypoints/deno.ts third_party/masto.js",
     "bundle": "deno task bundle:mastojs"
+  },
+  "compilerOptions": {
+    "lib": ["dom", "es2022"]
   }
 }

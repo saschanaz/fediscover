@@ -2,6 +2,9 @@ import { login } from "./third_party/masto.js";
 import * as idbKeyval from "https://cdn.jsdelivr.net/npm/idb-keyval@6/+esm";
 import html from "https://cdn.jsdelivr.net/npm/nanohtml@1/+esm";
 
+/** @type {Promise<import("./third_party/masto.js").MastoClient>} masto */
+export let mastoReady;
+
 /**
  * @param {EventTarget} target
  * @param {string} eventName
@@ -89,37 +92,64 @@ async function getAppData(masto, domain, redirectUri) {
   return created;
 }
 
-async function authorize() {
-  const domain = sanitizeDomain(document.getElementById("domainInput").value);
+async function authorizeClicked() {
+  async function authorize() {
+    const domain = sanitizeDomain(document.getElementById("domainInput").value);
 
-  const masto = await login({ url: domain });
+    const masto = await login({ url: domain });
 
-  const redirectUri = new URL("redirect.html", location.href).toString();
-  const app = await getAppData(masto, domain, redirectUri);
+    const redirectUri = new URL("redirect.html", location.href).toString();
+    const app = await getAppData(masto, domain, redirectUri);
 
-  const code = await authorizeInPopup(domain, app.clientId, redirectUri);
+    const code = await authorizeInPopup(domain, app.clientId, redirectUri);
 
-  const token = await obtainToken(
-    domain,
-    app.clientId,
-    app.clientSecret,
-    code,
-    redirectUri
-  );
+    const token = await obtainToken(
+      domain,
+      app.clientId,
+      app.clientSecret,
+      code,
+      redirectUri
+    );
 
-  masto.config.accessToken = token.access_token;
+    masto.config.accessToken = token.access_token;
 
-  idbKeyval.set("accessToken", token.access_token);
+    idbKeyval.set("accessToken", token.access_token);
+
+    return masto;
+  }
+
+  while (true) {
+    try {
+      await authorize();
+      document.getElementById("authorizeForm").remove();
+    } catch (err) {
+      console.error(err);
+      alert(err);
+    }
+  }
 }
 
 async function main() {
-  const [domain, token] = await idbKeyval.getMany(["domain", "accessToken"]);
-  if (!domain || !token) {
-    document.body.append(html`
-      <label>Domain: <input id="domainInput" placeholder="example.com" /></label>
-      <button onclick=${authorize}>Authorize</button>
-    `);
+  const [app, token] = await idbKeyval.getMany(["app", "accessToken"]);
+  if (!app || !token) {
+    await new Promise((resolve) => {
+      document.body.append(html`
+        <div id="authorizeForm">
+          <label
+            >Domain: <input id="domainInput" placeholder="example.com"
+          /></label>
+          <button onclick=${() => authorizeClicked().then(resolve)}>
+            Authorize
+          </button>
+        </div>
+      `);
+    });
+  } else {
+    mastoReady = login({ url: app.website, accessToken: token });
   }
+
+  const masto = await mastoReady;
+  console.log(await masto.accounts.verifyCredentials())
 }
 
 await main();

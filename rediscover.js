@@ -7,8 +7,19 @@ function pickRandom(arr, count) {
   return arr.sort(() => (Math.random() > 0.5 ? 1 : -1)).slice(0, count);
 }
 
-function isRecentNonConversationPost(post, since) {
-  return new Date(post.createdAt).valueOf() > since && post.mentions.length === 0;
+function isRecentUnreadStandalonePost(post, since) {
+  if (post.inReplyToId && post.mentions.length > 0) {
+    // A part of conversation
+    return false;
+  }
+  if (post.reblog) {
+    return false;
+  }
+  if (post.reblogged || post.favourited || post.bookmarked) {
+    // It's clear that the post is read
+    return false;
+  }
+  return new Date(post.createdAt).valueOf() > since;
 }
 
 export class Rediscover {
@@ -64,7 +75,7 @@ export class Rediscover {
         .getStatusesIterable(following.id)
         .next();
       const status = pickRandom(
-        value.filter((v) => isRecentNonConversationPost(v, since)),
+        value.filter((v) => isRecentUnreadStandalonePost(v, since)),
         1
       )[0];
       if (status) {

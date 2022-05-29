@@ -16,6 +16,11 @@ function computeLocalWebUrl(domain, post) {
   return new URL(`web/@${post.account.acct}/${post.id}`, domain).toString();
 }
 
+/**
+ * @param {string} domain
+ * @param {*} post
+ * @returns
+ */
 function renderPost(domain, post) {
   return html`
     ${document.createRange().createContextualFragment(post.content)}
@@ -29,6 +34,17 @@ function renderPost(domain, post) {
   `;
 }
 
+/** @type {HTMLTemplateElement} */
+const loadingIndicator = html`
+  <p>
+    <span class="placeholder col-7"></span>
+    <span class="placeholder col-4"></span>
+    <span class="placeholder col-4"></span>
+    <span class="placeholder col-6"></span>
+    <span class="placeholder col-8"></span>
+  </p>
+`;
+
 /**
  * @param {Rediscover} rediscover
  * @param {Element} parentElement
@@ -38,15 +54,19 @@ async function renderRandomPosts(rediscover, parentElement) {
   parentElement.replaceChildren();
 
   for (const following of await rediscover.maybeFetchActiveFollowings()) {
+    const indicatorClone = loadingIndicator.cloneNode(true);
+
     const article = html`
-      <article>
+      <article class="card card-body">
         <h1>${following.displayName}</h1>
+        ${indicatorClone}
       </article>
     `;
     parentElement.append(article);
 
     // lazy rendering
     rediscover.maybeFetchRandomPostFromAccount(following.id).then((post) => {
+      indicatorClone.remove();
       if (!post) {
         article.remove();
         return;
@@ -64,11 +84,16 @@ async function main() {
 
   const rediscover = new Rediscover(masto);
 
-  const container = document.createElement("main");
+  const container = html`<main class="container"></main>`;
   document.body.append(html`
-    <button onclick=${() => renderRandomPosts(rediscover, container)}>
-      Refresh
-    </button>
+    <div class="d-flex justify-content-center">
+      <button
+        class="btn btn-primary"
+        onclick=${() => renderRandomPosts(rediscover, container)}
+      >
+        Refresh
+      </button>
+    </div>
     ${container}
   `);
 

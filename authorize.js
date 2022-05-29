@@ -2,9 +2,6 @@ import { login } from "./third_party/masto.js";
 import * as idbKeyval from "https://cdn.jsdelivr.net/npm/idb-keyval@6/+esm";
 import html from "https://cdn.jsdelivr.net/npm/nanohtml@1/+esm";
 
-/** @type {Promise<import("./third_party/masto.js").MastoClient>} masto */
-export let mastoReady;
-
 /**
  * @param {EventTarget} target
  * @param {string} eventName
@@ -129,27 +126,24 @@ async function authorizeClicked() {
   }
 }
 
-async function main() {
+/**
+ * @param {Element} parentElement
+ */
+export async function maybeAuthorizeViaForm(parentElement) {
   const [app, token] = await idbKeyval.getMany(["app", "accessToken"]);
-  if (!app || !token) {
-    await new Promise((resolve) => {
-      document.body.append(html`
-        <div id="authorizeForm">
-          <label
-            >Domain: <input id="domainInput" placeholder="example.com"
-          /></label>
-          <button onclick=${() => authorizeClicked().then(resolve)}>
-            Authorize
-          </button>
-        </div>
-      `);
-    });
-  } else {
-    mastoReady = login({ url: app.website, accessToken: token });
+  if (app && token) {
+    return await login({ url: app.website, accessToken: token });
   }
-
-  const masto = await mastoReady;
-  console.log(await masto.accounts.verifyCredentials())
+  return await new Promise((resolve) => {
+    parentElement.append(html`
+      <div id="authorizeForm">
+        <label
+          >Domain: <input id="domainInput" placeholder="example.com"
+        /></label>
+        <button onclick=${() => authorizeClicked().then(resolve)}>
+          Authorize
+        </button>
+      </div>
+    `);
+  });
 }
-
-await main();

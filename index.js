@@ -2,6 +2,9 @@ import { maybeAuthorizeViaForm } from "./authorize.js";
 import { Rediscover } from "./rediscover.js";
 import html from "https://cdn.jsdelivr.net/npm/nanohtml@1/+esm";
 
+// Note: Utimately replace this with Temporal, but we're not there yet
+import moment from "https://cdn.jsdelivr.net/npm/moment@2/+esm";
+
 /** @type {Promise<import("./third_party/masto.js").MastoClient>} */
 export let mastoReady;
 
@@ -18,7 +21,9 @@ function renderPost(domain, post) {
     ${document.createRange().createContextualFragment(post.content)}
     <div>
       <a href=${computeLocalWebUrl(domain, post)} target="_blank"
-        ><time datetime=${post.createdAt}>${new Date(post.createdAt)}</time></a
+        ><time datetime=${post.createdAt}
+          >${moment(post.createdAt).fromNow()}</time
+        ></a
       >
     </div>
   `;

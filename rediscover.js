@@ -23,11 +23,18 @@ function isRecentUnreadStandalonePost(post, since) {
 }
 
 export class Rediscover {
-  /** @param {import("./third_party/masto.js").MastoClient} masto */
-  constructor(masto) {
+  /**
+   * @param {import("./third_party/masto.js").MastoClient} masto
+   * @param {object} [options]
+   * @param {number} [options.since]
+   */
+  constructor(masto, { since } = {}) {
     this.masto = masto;
     this.followers = null;
     this.myself = null;
+
+    // since previous week by default
+    this.since = since ?? new Date().valueOf() - 7 * 24 * 60 * 60 * 1000;
   }
 
   async maybeFetchMyself() {
@@ -59,29 +66,25 @@ export class Rediscover {
     return await this.fetchAllFollowings();
   }
 
-  async fetchRecentRandomPosts({ max = 40, since } = {}) {
-    if (!since) {
-      // since previous week by default
-      since = new Date().valueOf() - 7 * 24 * 60 * 60 * 1000;
-    }
-
+  async maybeFetchActiveFollowings({ max = 40 } = {}) {
     const followingsAll = await this.maybeFetchAllFollowings();
-    const followingsActive = pickRandom(
-      followingsAll.filter((f) => new Date(f.lastStatusAt).valueOf() > since),
+    return pickRandom(
+      followingsAll.filter(
+        (f) => new Date(f.lastStatusAt).valueOf() > this.since
+      ),
       max
     );
-    const statuses = await Promise.all(
-      followingsActive.map(async (following) => {
-        const { value } = await this.masto.accounts
-          .getStatusesIterable(following.id)
-          .next();
-        const status = pickRandom(
-          value.filter((v) => isRecentUnreadStandalonePost(v, since)),
-          1
-        )[0];
-        return status;
-      })
-    );
-    return statuses.filter((s) => s);
+  }
+
+  /**
+   * @param {string} id
+   */
+  async fetchRandomPostFromAccount(id) {
+    const { value } = await this.masto.accounts.getStatusesIterable(id).next();
+    const status = pickRandom(
+      value.filter((v) => isRecentUnreadStandalonePost(v, this.since)),
+      1
+    )[0];
+    return status;
   }
 }

@@ -35,6 +35,7 @@ export class Rediscover {
 
     // since previous week by default
     this.since = since ?? new Date().valueOf() - 7 * 24 * 60 * 60 * 1000;
+    this.postCache = new Map();
   }
 
   async maybeFetchMyself() {
@@ -79,12 +80,20 @@ export class Rediscover {
   /**
    * @param {string} id
    */
-  async fetchRandomPostFromAccount(id) {
-    const { value } = await this.masto.accounts.getStatusesIterable(id).next();
-    const status = pickRandom(
-      value.filter((v) => isRecentUnreadStandalonePost(v, this.since)),
+  async fetchPostsFromAccount(id) {
+    return (await this.masto.accounts.getStatusesIterable(id).next()).value;
+  }
+
+  /**
+   * @param {string} id
+   */
+  async maybeFetchRandomPostFromAccount(id) {
+    const posts =
+      this.postCache.get(id) ?? (await this.fetchPostsFromAccount(id));
+    this.postCache.set(id, posts);
+    return pickRandom(
+      posts.filter((v) => isRecentUnreadStandalonePost(v, this.since)),
       1
     )[0];
-    return status;
   }
 }

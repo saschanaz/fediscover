@@ -41,7 +41,7 @@ async function renderRandomPosts(rediscover, parentElement) {
     parentElement.append(article);
 
     // lazy rendering
-    rediscover.fetchRandomPostFromAccount(following.id).then((post) => {
+    rediscover.maybeFetchRandomPostFromAccount(following.id).then((post) => {
       if (!post) {
         article.remove();
         return;
@@ -59,7 +59,7 @@ async function main() {
 
   const rediscover = new Rediscover(masto);
 
-  const container = document.createElement("div");
+  const container = document.createElement("main");
   document.body.append(html`
     <button onclick=${() => renderRandomPosts(rediscover, container)}>
       Refresh

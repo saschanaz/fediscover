@@ -24,29 +24,50 @@ function renderPost(domain, post) {
   `;
 }
 
-async function main() {
-  mastoReady = maybeAuthorizeViaForm(document.body);
+/**
+ * @param {Rediscover} rediscover
+ * @param {Element} parentElement
+ */
+async function renderRandomPosts(rediscover, parentElement) {
+  // clear the element
+  parentElement.replaceChildren();
 
-  const masto = await mastoReady;
-
-  const rediscover = new Rediscover(masto);
   for (const following of await rediscover.maybeFetchActiveFollowings()) {
     const article = html`
       <article>
         <h1>${following.displayName}</h1>
       </article>
     `;
-    document.body.append(article);
+    parentElement.append(article);
 
     // lazy rendering
     rediscover.fetchRandomPostFromAccount(following.id).then((post) => {
       if (!post) {
+        article.remove();
         return;
       }
       article.lang = post.language || "";
-      article.append(renderPost(masto.config.url, post));
+      article.append(renderPost(rediscover.masto.config.url, post));
     });
   }
+}
+
+async function main() {
+  mastoReady = maybeAuthorizeViaForm(document.body);
+
+  const masto = await mastoReady;
+
+  const rediscover = new Rediscover(masto);
+
+  const container = document.createElement("div");
+  document.body.append(html`
+    <button onclick=${() => renderRandomPosts(rediscover, container)}>
+      Refresh
+    </button>
+    ${container}
+  `);
+
+  renderRandomPosts(rediscover, container);
 }
 
 await main();

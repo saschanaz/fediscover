@@ -19,7 +19,7 @@ async function main() {
   const masto = await mastoReady;
 
   const rediscover = new Rediscover(masto);
-  for await (const post of rediscover.fetchRecentRandomPosts()) {
+  for (const post of await rediscover.fetchRecentRandomPosts()) {
     document.body.append(html`
       <article lang=${post.language || ""}>
         <h1>${post.account.displayName}</h1>

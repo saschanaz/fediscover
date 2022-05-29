@@ -59,7 +59,7 @@ export class Rediscover {
     return await this.fetchAllFollowings();
   }
 
-  async *fetchRecentRandomPosts({ max = 40, since } = {}) {
+  async fetchRecentRandomPosts({ max = 40, since } = {}) {
     if (!since) {
       // since previous week by default
       since = new Date().valueOf() - 7 * 24 * 60 * 60 * 1000;
@@ -70,17 +70,18 @@ export class Rediscover {
       followingsAll.filter((f) => new Date(f.lastStatusAt).valueOf() > since),
       max
     );
-    for (const following of followingsActive) {
-      const { value } = await this.masto.accounts
-        .getStatusesIterable(following.id)
-        .next();
-      const status = pickRandom(
-        value.filter((v) => isRecentUnreadStandalonePost(v, since)),
-        1
-      )[0];
-      if (status) {
-        yield status;
-      }
-    }
+    const statuses = await Promise.all(
+      followingsActive.map(async (following) => {
+        const { value } = await this.masto.accounts
+          .getStatusesIterable(following.id)
+          .next();
+        const status = pickRandom(
+          value.filter((v) => isRecentUnreadStandalonePost(v, since)),
+          1
+        )[0];
+        return status;
+      })
+    );
+    return statuses.filter((s) => s);
   }
 }

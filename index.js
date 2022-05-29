@@ -22,10 +22,20 @@ function computeLocalWebUrl(domain, post) {
  * @returns
  */
 function renderPost(domain, post) {
+  function renderContent() {
+    if (post.spoilerText) {
+      return html`<p>(CW: ${post.spoilerText})</p>`;
+    }
+    return document.createRange().createContextualFragment(post.content);
+  }
+
   return html`
-    ${document.createRange().createContextualFragment(post.content)}
-    ${post.mediaAttachments.length ? `(${post.mediaAttachments.length} media)` : ""}
+    ${renderContent()}
+    ${post.mediaAttachments.length
+      ? `(${post.mediaAttachments.length} media)`
+      : ""}
     ${post.poll ? `(poll exists)` : ""}
+    ${post.sensitive ? `(marked as sensitive)` : ""}
     <div>
       <a href=${computeLocalWebUrl(domain, post)} target="_blank"
         ><time datetime=${post.createdAt}

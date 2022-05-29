@@ -24,6 +24,8 @@ function computeLocalWebUrl(domain, post) {
 function renderPost(domain, post) {
   return html`
     ${document.createRange().createContextualFragment(post.content)}
+    ${post.mediaAttachments.length ? `(${post.mediaAttachments.length} media)` : ""}
+    ${post.poll ? `(poll exists)` : ""}
     <div>
       <a href=${computeLocalWebUrl(domain, post)} target="_blank"
         ><time datetime=${post.createdAt}

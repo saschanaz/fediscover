@@ -8,7 +8,7 @@ function pickRandom(arr, count) {
 }
 
 function isRecentUnreadStandalonePost(post, since) {
-  if (post.inReplyToId && post.mentions.length > 0) {
+  if (post.inReplyToAccountId) {
     // A part of conversation
     return false;
   }

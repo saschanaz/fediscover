@@ -1,4 +1,4 @@
-import { login } from "./third_party/masto.js";
+import { login } from "https://cdn.jsdelivr.net/npm/masto@4/+esm";
 import * as idbKeyval from "https://cdn.jsdelivr.net/npm/idb-keyval@6/+esm";
 import html from "https://cdn.jsdelivr.net/npm/nanohtml@1/+esm";
 

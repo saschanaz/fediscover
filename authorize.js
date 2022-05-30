@@ -119,6 +119,7 @@ async function authorizeClicked() {
     try {
       await authorize();
       document.getElementById("authorizeForm").remove();
+      return;
     } catch (err) {
       console.error(err);
       alert(err);

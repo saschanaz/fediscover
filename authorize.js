@@ -139,11 +139,19 @@ export async function maybeAuthorizeViaForm(parentElement) {
   }
   return await new Promise((resolve) => {
     parentElement.append(html`
-      <div id="authorizeForm">
-        <label
-          >Domain: <input id="domainInput" placeholder="example.com"
-        /></label>
-        <button onclick=${() => authorizeClicked().then(resolve)}>
+      <div id="authorizeForm" class="container input-group">
+        <span class="input-group-text">Domain</span>
+        <input
+          id="domainInput"
+          aria-label="Domain"
+          class="form-control"
+          placeholder="example.com"
+        />
+        <button
+          class="btn btn-primary"
+          type="button"
+          onclick=${() => authorizeClicked().then(resolve)}
+        >
           Authorize
         </button>
       </div>

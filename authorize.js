@@ -109,6 +109,8 @@ async function authorizeClicked() {
     );
 
     masto.config.accessToken = token.access_token;
+    // TODO: Replace Axios
+    masto.http.axios.defaults.headers.Authorization = `Bearer ${token.access_token}`;
 
     idbKeyval.set("accessToken", token.access_token);
 
@@ -117,9 +119,9 @@ async function authorizeClicked() {
 
   while (true) {
     try {
-      await authorize();
+      const masto = await authorize();
       document.getElementById("authorizeForm").remove();
-      return;
+      return masto;
     } catch (err) {
       console.error(err);
       alert(err);

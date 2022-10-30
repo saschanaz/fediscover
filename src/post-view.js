@@ -14,6 +14,24 @@ const loadingIndicator = html`
   </p>
 `;
 
+/** @type {HTMLStyleElement} */
+const style = html`
+  <style>
+    .invisible {
+      font-size: 0;
+      line-height: 0;
+      display: inline-block;
+      width: 0;
+      height: 0;
+      /* Reverts bootstrap .invisible */
+      visibility: revert !important;
+    }
+    .ellipsis::after {
+      content: "…"
+    }
+  </style>
+`;
+
 /**
  * @param {string} domain
  * @param {*} post
@@ -37,6 +55,7 @@ export class PostView extends HTMLElement {
         rel="stylesheet"
         crossorigin="anonymous"
       />`,
+      style.cloneNode(true),
       html`<h1>${following.displayName}</h1>`,
       this.#indicator
     );

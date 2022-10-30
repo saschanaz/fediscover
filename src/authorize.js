@@ -69,7 +69,7 @@ function sanitizeDomain(domain) {
 }
 
 /**
- * @param {import("./third_party/masto.js").MastoClient} masto
+ * @param {import("../third_party/masto.js").MastoClient} masto
  * @param {string} domain
  * @param {string} redirectUri
  */

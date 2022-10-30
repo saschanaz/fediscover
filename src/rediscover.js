@@ -24,7 +24,7 @@ function isRecentUnreadStandalonePost(post, since) {
 
 export class Rediscover {
   /**
-   * @param {import("./third_party/masto.js").MastoClient} masto
+   * @param {import("../third_party/masto.js").MastoClient} masto
    * @param {object} [options]
    * @param {number} [options.since]
    */

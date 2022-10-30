@@ -5,7 +5,7 @@ import html from "https://cdn.jsdelivr.net/npm/nanohtml@1/+esm";
 // Note: Utimately replace this with Temporal, but we're not there yet
 import moment from "https://cdn.jsdelivr.net/npm/moment@2/+esm";
 
-/** @type {Promise<import("./third_party/masto.js").MastoClient>} */
+/** @type {Promise<import("../third_party/masto.js").MastoClient>} */
 export let mastoReady;
 
 /**

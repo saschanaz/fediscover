@@ -27,7 +27,7 @@ const style = html`
       visibility: revert !important;
     }
     .ellipsis::after {
-      content: "…"
+      content: "…";
     }
   </style>
 `;
@@ -56,7 +56,7 @@ export class PostView extends HTMLElement {
         crossorigin="anonymous"
       />`,
       style.cloneNode(true),
-      html`<h1>${following.displayName}</h1>`,
+      html`<h1>${following.displayName || following.username}</h1>`,
       this.#indicator
     );
   }

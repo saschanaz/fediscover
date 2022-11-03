@@ -17,6 +17,27 @@ const loadingIndicator = html`
 /** @type {HTMLStyleElement} */
 const style = html`
   <style>
+    .placeholder {
+      display: inline-block;
+      min-height: 1em;
+      vertical-align: middle;
+      cursor: wait;
+      background-color: currentcolor;
+      opacity: 0.5;
+    }
+    .col-4 {
+      width: 33.33333333%;
+    }
+    .col-6 {
+      width: 50%;
+    }
+    .col-7 {
+      width: 58.33333333%;
+    }
+    .col-8 {
+      width: 66.66666667%;
+    }
+
     .invisible {
       font-size: 0;
       line-height: 0;

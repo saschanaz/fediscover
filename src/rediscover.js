@@ -7,14 +7,7 @@ function pickRandom(arr, count) {
   return arr.sort(() => (Math.random() > 0.5 ? 1 : -1)).slice(0, count);
 }
 
-function isRecentUnreadStandalonePost(post, since) {
-  if (post.inReplyToAccountId) {
-    // A part of conversation
-    return false;
-  }
-  if (post.reblog) {
-    return false;
-  }
+function isRecentUnreadPost(post, since) {
   if (post.reblogged || post.favourited || post.bookmarked) {
     // It's clear that the post is read
     return false;
@@ -80,8 +73,11 @@ export class Rediscover {
   /**
    * @param {string} id
    */
-  async fetchPostsFromAccount(id) {
-    return (await this.masto.accounts.getStatusesIterable(id).next()).value;
+  fetchPostsFromAccount(id) {
+    // masto.js's getStatusesIterable cannot pass parameters as it tries sending them as a body in a GET request.
+    return this.masto.accounts.http.get(
+      `/api/v1/accounts/${id}/statuses?exclude_reblogs=true&exclude_replies=true`
+    );
   }
 
   /**
@@ -92,7 +88,7 @@ export class Rediscover {
       this.postCache.get(id) ?? (await this.fetchPostsFromAccount(id));
     this.postCache.set(id, posts);
     return pickRandom(
-      posts.filter((v) => isRecentUnreadStandalonePost(v, this.since)),
+      posts.filter((v) => isRecentUnreadPost(v, this.since)),
       1
     )[0];
   }

@@ -40,7 +40,7 @@ function computeLocalWebUrl(domain, post) {
   return new URL(`web/@${post.account.acct}/${post.id}`, domain).toString();
 }
 
-export class PostView extends HTMLElement {
+export class PostElement extends HTMLElement {
   #indicator = loadingIndicator.cloneNode(true);
 
   /**
@@ -92,3 +92,6 @@ export class PostView extends HTMLElement {
     this.shadowRoot.replaceChild(newChild, this.#indicator);
   }
 }
+
+
+customElements.define("masto-post", PostElement);

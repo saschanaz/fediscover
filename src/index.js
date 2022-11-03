@@ -1,6 +1,6 @@
 import { maybeAuthorizeViaForm } from "./authorize.js";
 import { Rediscover } from "./rediscover.js";
-import { PostView } from "./post-view.js";
+import { PostElement } from "./ui/post.js";
 import html from "https://cdn.jsdelivr.net/npm/nanohtml@1/+esm";
 
 /** @type {Promise<import("../third_party/masto.js").MastoClient>} */
@@ -16,7 +16,7 @@ async function renderRandomPosts(rediscover, parentElement) {
   parentElement.replaceChildren();
 
   for (const following of await rediscover.maybeFetchActiveFollowings()) {
-    const view = new PostView(following);
+    const view = new PostElement(following);
     view.classList.add("card", "card-body")
     parentElement.append(view);
 
@@ -33,8 +33,6 @@ async function renderRandomPosts(rediscover, parentElement) {
 }
 
 async function main() {
-  customElements.define("post-view", PostView);
-
   mastoReady = maybeAuthorizeViaForm(document.body);
 
   const masto = await mastoReady;

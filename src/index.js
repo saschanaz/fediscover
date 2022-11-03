@@ -16,7 +16,7 @@ async function renderRandomPosts(rediscover, parentElement) {
   parentElement.replaceChildren();
 
   for (const following of await rediscover.maybeFetchActiveFollowings()) {
-    const view = new PostElement(following);
+    const view = new PostElement(rediscover.masto.config.url, following);
     view.classList.add("card", "card-body")
     parentElement.append(view);
 
@@ -27,7 +27,7 @@ async function renderRandomPosts(rediscover, parentElement) {
         return;
       }
       view.lang = post.language || "";
-      view.renderPost(rediscover.masto.config.url, post);
+      view.post = post;
     });
   }
 }

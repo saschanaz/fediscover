@@ -42,12 +42,15 @@ function computeLocalWebUrl(domain, post) {
 
 export class PostElement extends HTMLElement {
   #indicator = loadingIndicator.cloneNode(true);
+  #post;
 
   /**
+   * @param {string} domain
    * @param {*} following
    */
-  constructor(following) {
+  constructor(domain, following) {
     super();
+    this.domain = domain;
     this.attachShadow({ mode: "open" });
     this.shadowRoot.append(
       html`<link
@@ -61,18 +64,23 @@ export class PostElement extends HTMLElement {
     );
   }
 
+  get post() {
+    return this.#post;
+  }
+
   /**
-   * @param {string} domain
    * @param {*} post
    * @returns
    */
-  renderPost(domain, post) {
+  set post(post) {
     function renderContent() {
       if (post.spoilerText) {
         return html`<p>(CW: ${post.spoilerText})</p>`;
       }
       return document.createRange().createContextualFragment(post.content);
     }
+
+    this.#post = post;
 
     const newChild = html`
       ${renderContent()}
@@ -82,7 +90,7 @@ export class PostElement extends HTMLElement {
       ${post.poll ? `(poll exists)` : ""}
       ${post.sensitive ? `(marked as sensitive)` : ""}
       <div>
-        <a href=${computeLocalWebUrl(domain, post)} target="_blank"
+        <a href=${computeLocalWebUrl(this.domain, post)} target="_blank"
           ><time datetime=${post.createdAt}
             >${moment(post.createdAt).fromNow()}</time
           ></a
@@ -92,6 +100,5 @@ export class PostElement extends HTMLElement {
     this.shadowRoot.replaceChild(newChild, this.#indicator);
   }
 }
-
 
 customElements.define("masto-post", PostElement);

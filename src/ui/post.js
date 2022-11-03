@@ -3,7 +3,7 @@ import html from "https://cdn.jsdelivr.net/npm/nanohtml@1/+esm";
 // Note: Ultimately replace this with Temporal, but we're not there yet
 import moment from "https://cdn.jsdelivr.net/npm/moment@2/+esm";
 
-/** @type {HTMLTemplateElement} */
+/** @type {HTMLParagraphElement} */
 const loadingIndicator = html`
   <p>
     <span class="placeholder col-7"></span>
@@ -23,11 +23,25 @@ const style = html`
       display: inline-block;
       width: 0;
       height: 0;
-      /* Reverts bootstrap .invisible */
-      visibility: revert !important;
     }
     .ellipsis::after {
       content: "…";
+    }
+
+    .user-box {
+      display: flex;
+    }
+    .user-image {
+      width: 48px;
+      height: 48px;
+      margin-right: 6px;
+      box-sizing: border-box;
+      border-radius: 4px;
+    }
+    .user-name-and-acct {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
   </style>
 `;
@@ -41,6 +55,7 @@ function computeLocalWebUrl(domain, post) {
 }
 
 export class PostElement extends HTMLElement {
+  /** @type {HTMLParagraphElement} */
   #indicator = loadingIndicator.cloneNode(true);
   #post;
 
@@ -52,14 +67,24 @@ export class PostElement extends HTMLElement {
     super();
     this.domain = domain;
     this.attachShadow({ mode: "open" });
+    this.#initializeTree(following);
+  }
+
+  /**
+   * @param {*} following
+   */
+  #initializeTree(following) {
     this.shadowRoot.append(
-      html`<link
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5/dist/css/bootstrap.min.css"
-        rel="stylesheet"
-        crossorigin="anonymous"
-      />`,
       style.cloneNode(true),
-      html`<h1>${following.displayName || following.username}</h1>`,
+      html`
+        <div class="user-box">
+          <img class="user-image" src="${following.avatarStatic}" />
+          <div class="user-name-and-acct">
+            <strong>${following.displayName || following.username}</strong>
+            <span>@${following.acct}</span>
+          </div>
+        </div>
+      `,
       this.#indicator
     );
   }

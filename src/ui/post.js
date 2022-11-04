@@ -17,6 +17,13 @@ const loadingIndicator = html`
 /** @type {HTMLStyleElement} */
 const style = html`
   <style>
+    :host {
+      display: block;
+      padding: 1rem;
+      background-color: white;
+      border-radius: 0.375rem;
+    }
+
     .placeholder {
       display: inline-block;
       min-height: 1em;

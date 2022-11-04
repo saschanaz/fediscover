@@ -17,7 +17,6 @@ async function renderRandomPosts(rediscover, parentElement) {
 
   for (const following of await rediscover.maybeFetchActiveFollowings()) {
     const view = new PostElement(rediscover.masto.config.url, following);
-    view.classList.add("card", "card-body")
     parentElement.append(view);
 
     // lazy rendering

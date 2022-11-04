@@ -51,6 +51,7 @@ const style = html`
 
     .user-box {
       display: flex;
+      align-items: center;
     }
     .user-image {
       width: 48px;
@@ -60,9 +61,13 @@ const style = html`
       border-radius: 4px;
     }
     .user-name-and-acct {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
+      overflow: hidden;
+    }
+    .user-acct {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      opacity: .7;
     }
   </style>
 `;
@@ -102,7 +107,7 @@ export class PostElement extends HTMLElement {
           <img class="user-image" src="${following.avatarStatic}" />
           <div class="user-name-and-acct">
             <strong>${following.displayName || following.username}</strong>
-            <span>@${following.acct}</span>
+            <div class="user-acct">@${following.acct}</span>
           </div>
         </div>
       `,

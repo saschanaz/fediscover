@@ -141,10 +141,26 @@ export class PostElement extends HTMLElement {
    * @returns
    */
   set post(post) {
-    function renderContent() {
+    const renderContent = () => {
       const content = document
         .createRange()
         .createContextualFragment(target.content);
+      for (const mention of content.querySelectorAll(".u-url.mention")) {
+        const { acct } = target.mentions.find((m) =>
+          [m.acct, m.username].includes(
+            mention.querySelector("span").textContent
+          )
+        );
+        mention.href = computeLocalAcctUrl(this.domain, acct);
+      }
+      for (const hashtag of content.querySelectorAll(".mention.hashtag")) {
+        const { url } = target.tags.find(
+          (m) =>
+            m.name === hashtag.querySelector("span").textContent.toLowerCase()
+        );
+        hashtag.href = url;
+      }
+
       if (!target.spoilerText) {
         return content;
       }
@@ -155,7 +171,7 @@ export class PostElement extends HTMLElement {
           ${content}
         </details>
       `;
-    }
+    };
 
     const maybeRenderReblogInfo = () => {
       if (!post.reblog) {

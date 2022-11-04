@@ -58,7 +58,7 @@ const style = html`
 
     .chrome-link {
       opacity: 0.6;
-      color: initial;
+      color: unset;
     }
 
     .user-box {

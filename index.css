@@ -1,0 +1,11 @@
+body {
+  background-color: #4d1212;
+}
+
+.masto-header {
+  color: #ffefef;
+}
+
+masto-post {
+  margin: 20px 0px;
+}

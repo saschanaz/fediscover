@@ -156,7 +156,8 @@ export class PostElement extends HTMLElement {
       for (const hashtag of content.querySelectorAll(".mention.hashtag")) {
         const { url } = target.tags.find(
           (m) =>
-            m.name === hashtag.querySelector("span").textContent.toLowerCase()
+            m.name.toLowerCase() ===
+            hashtag.querySelector("span").textContent.toLowerCase()
         );
         hashtag.href = url;
       }

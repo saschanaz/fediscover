@@ -142,10 +142,19 @@ export class PostElement extends HTMLElement {
    */
   set post(post) {
     function renderContent() {
-      if (target.spoilerText) {
-        return html`<p>(Summary: ${target.spoilerText})</p>`;
+      const content = document
+        .createRange()
+        .createContextualFragment(target.content);
+      if (!target.spoilerText) {
+        return content;
       }
-      return document.createRange().createContextualFragment(target.content);
+
+      return html`
+        <details>
+          <summary>${target.spoilerText}</summary>
+          ${content}
+        </details>
+      `;
     }
 
     const maybeRenderReblogInfo = () => {

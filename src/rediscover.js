@@ -8,11 +8,13 @@ function pickRandom(arr, count) {
 }
 
 function isRecentUnreadPost(post, since) {
-  if (post.reblogged || post.favourited || post.bookmarked) {
+  const target = post.reblog ?? post;
+
+  if (target.reblogged || target.favourited || target.bookmarked) {
     // It's clear that the post is read
     return false;
   }
-  return new Date(post.createdAt).valueOf() > since;
+  return new Date(target.createdAt).valueOf() > since;
 }
 
 export class Rediscover {
@@ -76,7 +78,7 @@ export class Rediscover {
   fetchPostsFromAccount(id) {
     // masto.js's getStatusesIterable cannot pass parameters as it tries sending them as a body in a GET request.
     return this.masto.accounts.http.get(
-      `/api/v1/accounts/${id}/statuses?exclude_reblogs=true&exclude_replies=true`
+      `/api/v1/accounts/${id}/statuses?exclude_replies=true`
     );
   }
 

@@ -18,8 +18,8 @@ const loadingIndicator = html`
 const style = html`
   <style>
     :host {
-      display: block;
-      padding: 1rem;
+      display: block flow-root;
+      padding: 0 1rem;
       background-color: white;
       border-radius: 0.375rem;
     }
@@ -56,11 +56,16 @@ const style = html`
       content: "…";
     }
 
+    .chrome-link {
+      opacity: 0.6;
+      color: initial;
+    }
+
     .user-box {
       display: flex;
       align-items: center;
     }
-    .user-image {
+    #user-image {
       width: 48px;
       height: 48px;
       margin-right: 6px;
@@ -70,11 +75,10 @@ const style = html`
     .user-name-and-acct {
       overflow: hidden;
     }
-    .user-acct {
+    #user-acct {
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      opacity: .7;
     }
   </style>
 `;
@@ -83,8 +87,16 @@ const style = html`
  * @param {string} domain
  * @param {*} post
  */
-function computeLocalWebUrl(domain, post) {
+function computeLocalPostUrl(domain, post) {
   return new URL(`web/@${post.account.acct}/${post.id}`, domain).toString();
+}
+
+/**
+ * @param {string} domain
+ * @param {string} acct
+ */
+function computeLocalAcctUrl(domain, acct) {
+  return new URL(`web/@${acct}`, domain).toString();
 }
 
 export class PostElement extends HTMLElement {
@@ -103,20 +115,18 @@ export class PostElement extends HTMLElement {
     this.#initializeTree(following);
   }
 
-  /**
-   * @param {*} following
-   */
-  #initializeTree(following) {
+  #initializeTree() {
     this.shadowRoot.append(
       style.cloneNode(true),
       html`
-        <div class="user-box">
-          <img class="user-image" src="${following.avatarStatic}" />
+        <p id="reblog-info"></p>
+        <p class="user-box">
+          <img id="user-image" />
           <div class="user-name-and-acct">
-            <strong>${following.displayName || following.username}</strong>
-            <div class="user-acct">@${following.acct}</span>
+            <strong id="user-name"></strong>
+            <div id="user-acct"></div>
           </div>
-        </div>
+        </p>
       `,
       this.#indicator
     );
@@ -132,28 +142,67 @@ export class PostElement extends HTMLElement {
    */
   set post(post) {
     function renderContent() {
-      if (post.spoilerText) {
-        return html`<p>(CW: ${post.spoilerText})</p>`;
+      if (target.spoilerText) {
+        return html`<p>(Summary: ${target.spoilerText})</p>`;
       }
-      return document.createRange().createContextualFragment(post.content);
+      return document.createRange().createContextualFragment(target.content);
     }
+
+    const maybeRenderReblogInfo = () => {
+      if (!post.reblog) {
+        return;
+      }
+      this.shadowRoot.getElementById("reblog-info").replaceChildren(html`
+        <a
+          class="chrome-link"
+          href="${computeLocalAcctUrl(this.domain, post.account.acct)}"
+          ><i
+            >Boosted ${moment(post.createdAt).fromNow()} by
+            ${post.account.displayName || post.account.username}</i
+          ></a
+        >
+      `);
+    };
+
+    const renderUserInfo = () => {
+      this.shadowRoot.getElementById("user-image").src =
+        target.account.avatarStatic;
+      this.shadowRoot.getElementById("user-name").textContent =
+        target.account.displayName || target.account.username;
+      this.shadowRoot
+        .getElementById("user-acct")
+        .replaceChildren(
+          html`<a
+            href="${computeLocalAcctUrl(this.domain, target.account.acct)}"
+            class="chrome-link"
+            >@${target.account.acct}</a
+          >`
+        );
+    };
 
     this.#post = post;
 
+    maybeRenderReblogInfo();
+
+    const target = post.reblog ?? post;
+    renderUserInfo();
     const newChild = html`
       ${renderContent()}
-      ${post.mediaAttachments.length
-        ? `(${post.mediaAttachments.length} media)`
+      ${target.mediaAttachments.length
+        ? `(${target.mediaAttachments.length} media)`
         : ""}
-      ${post.poll ? `(poll exists)` : ""}
-      ${post.sensitive ? `(marked as sensitive)` : ""}
-      <div>
-        <a href=${computeLocalWebUrl(this.domain, post)} target="_blank"
-          ><time datetime=${post.createdAt}
-            >${moment(post.createdAt).fromNow()}</time
+      ${target.poll ? `(poll exists)` : ""}
+      ${target.sensitive ? `(marked as sensitive)` : ""}
+      <p>
+        <a
+          class="chrome-link"
+          href=${computeLocalPostUrl(this.domain, target)}
+          target="_blank"
+          ><time datetime=${target.createdAt}
+            >${moment(target.createdAt).fromNow()}</time
           ></a
         >
-      </div>
+      </p>
     `;
     this.shadowRoot.replaceChild(newChild, this.#indicator);
   }

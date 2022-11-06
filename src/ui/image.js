@@ -3,6 +3,10 @@ import html from "https://cdn.jsdelivr.net/npm/nanohtml@1/+esm";
 export class MediaElement extends HTMLElement {
   #attachment;
 
+  get attachment() {
+    return this.#attachment;
+  }
+
   constructor(attachment) {
     super();
 
@@ -20,6 +24,16 @@ export class MediaElement extends HTMLElement {
             height: 100%;
             object-fit: cover;
           }
+          dialog {
+            height: 100%;
+            overflow:hidden;
+            padding: 0;
+            border: 0;
+            background-color: transparent;
+          }
+          dialog img {
+            object-fit: contain;
+          }
         </style>
         <img id="img" loading="lazy" src="${attachment.previewUrl}" />
         <dialog id="dialog">
@@ -31,7 +45,10 @@ export class MediaElement extends HTMLElement {
     /** @type {HTMLDialogElement} */
     const dialog = this.shadowRoot.getElementById("dialog");
     this.shadowRoot.getElementById("img").addEventListener("click", () => {
-      dialog.showModal();
+      // TODO: support others
+      if (attachment.type === "image") {
+        dialog.showModal();
+      }
     });
     dialog.addEventListener("click", () => {
       dialog.close();

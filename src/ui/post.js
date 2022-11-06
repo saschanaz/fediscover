@@ -84,6 +84,11 @@ const style = html`
 `;
 
 /**
+ * TODO: Mastodon 4.0 is removing /web prefix.
+ * https://github.com/mastodon/mastodon/pull/19319
+ * For now they will maintain the redirection,
+ * and we also need to keep it for backward compatibility.
+ *
  * @param {string} domain
  * @param {*} post
  */
@@ -154,12 +159,12 @@ export class PostElement extends HTMLElement {
         mention.href = computeLocalAcctUrl(this.domain, acct);
       }
       for (const hashtag of content.querySelectorAll(".mention.hashtag")) {
-        const { url } = target.tags.find(
-          (m) =>
-            m.name.toLowerCase() ===
-            hashtag.querySelector("span").textContent.toLowerCase()
-        );
-        hashtag.href = url;
+        // Each instance can normalize hashtags as it wants.
+        // As it's a moving target, here we ignore `status.tags` and simply put tags/{tag},
+        // which will then be normalized by the instance automatically.
+        // See also https://github.com/mastodon/mastodon/pull/18795.
+        const tag = hashtag.querySelector("span").textContent;
+        hashtag.href = new URL(`/web/tags/${tag}`, this.domain).toString();
       }
 
       if (!target.spoilerText) {

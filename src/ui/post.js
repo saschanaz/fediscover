@@ -20,7 +20,7 @@ const loadingIndicator = html`
 const style = html`
   <style>
     :host {
-      display: block flow-root;
+      display: flow-root;
       padding: 0 1rem;
       background-color: white;
       border-radius: 0.375rem;

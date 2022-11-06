@@ -7,11 +7,15 @@ function pickRandom(arr, count) {
   return arr.sort(() => (Math.random() > 0.5 ? 1 : -1)).slice(0, count);
 }
 
-function isRecentUnreadPost(post, since) {
+function isRecentUnreadPost(post, since, myAcct) {
   const target = post.reblog ?? post;
 
   if (target.reblogged || target.favourited || target.bookmarked) {
     // It's clear that the post is read
+    return false;
+  }
+  if (target.account.acct === myAcct) {
+    // Of course I read my own post
     return false;
   }
   return new Date(target.createdAt).valueOf() > since;
@@ -86,11 +90,12 @@ export class Rediscover {
    * @param {string} id
    */
   async maybeFetchRandomPostFromAccount(id) {
+    const myself = await this.maybeFetchMyself();
     const posts =
       this.postCache.get(id) ?? (await this.fetchPostsFromAccount(id));
     this.postCache.set(id, posts);
     return pickRandom(
-      posts.filter((v) => isRecentUnreadPost(v, this.since)),
+      posts.filter((v) => isRecentUnreadPost(v, this.since, myself.acct)),
       1
     )[0];
   }

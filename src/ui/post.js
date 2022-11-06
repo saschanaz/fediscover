@@ -81,6 +81,20 @@ const style = html`
       overflow: hidden;
       text-overflow: ellipsis;
     }
+
+    #media:not(:empty) {
+      display: flex;
+      margin-top: 1em;
+      gap: 12px;
+    }
+    #media img {
+      width: 96px;
+      height: 96px;
+      object-fit: cover;
+    }
+    .sensitive img {
+      filter: blur(5px);
+    }
   </style>
 `;
 
@@ -132,12 +146,12 @@ export class PostElement extends HTMLElement {
           </div>
         </div>
         <div id="contents">${loadingIndicator.cloneNode(true)}</div>
+        <div id="media"></div>
         <p>
           <a id="timestamp-anchor" class="chrome-link" target="_blank"
             ><time id="timestamp-time"></time
           ></a>
         </p>
-        <div class="media"></div>
       `
     );
   }
@@ -216,6 +230,14 @@ export class PostElement extends HTMLElement {
         );
     };
 
+    const renderMedia = () => {
+      for (const attachment of target.mediaAttachments) {
+        this.shadowRoot
+          .getElementById("media")
+          .append(html`<img src="${attachment.previewUrl}" />`);
+      }
+    };
+
     this.#post = post;
 
     maybeRenderReblogInfo();
@@ -224,14 +246,16 @@ export class PostElement extends HTMLElement {
     renderUserInfo();
 
     const newChild = html`
-      ${renderContent()}
-      ${target.mediaAttachments.length
-        ? `(${target.mediaAttachments.length} media)`
-        : ""}
-      ${target.poll ? `(poll exists)` : ""}
+      ${renderContent()} ${target.poll ? `(poll exists)` : ""}
+      ${target.card ? `(card exists)` : ""}
       ${target.sensitive ? `(marked as sensitive)` : ""}
     `;
     this.shadowRoot.getElementById("contents").replaceChildren(newChild);
+
+    this.shadowRoot
+      .getElementById("media")
+      .classList.toggle("sensitive", target.sensitive);
+    renderMedia();
 
     this.shadowRoot.getElementById("timestamp-anchor").href =
       computeLocalPostUrl(this.domain, target);

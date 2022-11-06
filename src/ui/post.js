@@ -3,6 +3,8 @@ import html from "https://cdn.jsdelivr.net/npm/nanohtml@1/+esm";
 // Note: Ultimately replace this with Temporal, but we're not there yet
 import moment from "https://cdn.jsdelivr.net/npm/moment@2/+esm";
 
+import { MediaElement } from "./image.js";
+
 /** @type {HTMLParagraphElement} */
 const loadingIndicator = html`
   <p>
@@ -87,12 +89,11 @@ const style = html`
       margin-top: 1em;
       gap: 12px;
     }
-    #media img {
+    #media masto-media {
       width: 96px;
       height: 96px;
-      object-fit: cover;
     }
-    .sensitive img {
+    .sensitive masto-media {
       filter: blur(5px);
     }
   </style>
@@ -234,7 +235,7 @@ export class PostElement extends HTMLElement {
       for (const attachment of target.mediaAttachments) {
         this.shadowRoot
           .getElementById("media")
-          .append(html`<img src="${attachment.previewUrl}" />`);
+          .append(new MediaElement(attachment));
       }
     };
 

@@ -64,6 +64,7 @@ const style = html`
     .user-box {
       display: flex;
       align-items: center;
+      margin-top: 1em;
     }
     #user-image {
       width: 48px;
@@ -105,8 +106,6 @@ function computeLocalAcctUrl(domain, acct) {
 }
 
 export class PostElement extends HTMLElement {
-  /** @type {HTMLParagraphElement} */
-  #indicator = loadingIndicator.cloneNode(true);
   #post;
 
   /**
@@ -125,15 +124,21 @@ export class PostElement extends HTMLElement {
       style.cloneNode(true),
       html`
         <p id="reblog-info"></p>
-        <p class="user-box">
+        <div class="user-box">
           <img id="user-image" />
           <div class="user-name-and-acct">
             <strong id="user-name"></strong>
             <div id="user-acct"></div>
           </div>
+        </div>
+        <div id="contents">${loadingIndicator.cloneNode(true)}</div>
+        <p>
+          <a id="timestamp-anchor" class="chrome-link" target="_blank"
+            ><time id="timestamp-time"></time
+          ></a>
         </p>
-      `,
-      this.#indicator
+        <div class="media"></div>
+      `
     );
   }
 
@@ -217,6 +222,7 @@ export class PostElement extends HTMLElement {
 
     const target = post.reblog ?? post;
     renderUserInfo();
+
     const newChild = html`
       ${renderContent()}
       ${target.mediaAttachments.length
@@ -224,18 +230,14 @@ export class PostElement extends HTMLElement {
         : ""}
       ${target.poll ? `(poll exists)` : ""}
       ${target.sensitive ? `(marked as sensitive)` : ""}
-      <p>
-        <a
-          class="chrome-link"
-          href=${computeLocalPostUrl(this.domain, target)}
-          target="_blank"
-          ><time datetime=${target.createdAt}
-            >${moment(target.createdAt).fromNow()}</time
-          ></a
-        >
-      </p>
     `;
-    this.shadowRoot.replaceChild(newChild, this.#indicator);
+    this.shadowRoot.getElementById("contents").replaceChildren(newChild);
+
+    this.shadowRoot.getElementById("timestamp-anchor").href =
+      computeLocalPostUrl(this.domain, target);
+    this.shadowRoot.getElementById("timestamp-time").textContent = moment(
+      target.createdAt
+    ).fromNow();
   }
 }
 

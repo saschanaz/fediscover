@@ -26,10 +26,13 @@ export class MediaElement extends HTMLElement {
           }
           dialog {
             height: 100%;
-            overflow:hidden;
+            overflow: hidden;
             padding: 0;
             border: 0;
             background-color: transparent;
+          }
+          dialog::backdrop {
+            background-color: #80808080;
           }
           dialog img {
             object-fit: contain;
@@ -63,7 +66,7 @@ export class MediaElement extends HTMLElement {
     });
     dialog.addEventListener("click", () => {
       dialog.close();
-    })
+    });
   }
 }
 

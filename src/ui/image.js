@@ -35,9 +35,20 @@ export class MediaElement extends HTMLElement {
             object-fit: contain;
           }
         </style>
-        <img id="img" loading="lazy" src="${attachment.previewUrl}" />
+        <img
+          id="img"
+          loading="lazy"
+          src="${attachment.previewUrl}"
+          alt="${attachment.description}"
+          title="${attachment.description}"
+        />
         <dialog id="dialog">
-          <img loading="lazy" src="${attachment.url}" />
+          <img
+            loading="lazy"
+            src="${attachment.url}"
+            alt="${attachment.description}"
+            title="${attachment.description}"
+          />
         </dialog>
       `
     );

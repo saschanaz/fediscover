@@ -33,6 +33,7 @@ export class MediaElement extends HTMLElement {
           }
           dialog::backdrop {
             background-color: #80808080;
+            backdrop-filter: blur(2px);
           }
           dialog img {
             object-fit: contain;

@@ -207,6 +207,7 @@ export class PostElement extends HTMLElement {
         <a
           class="chrome-link"
           href="${computeLocalAcctUrl(this.domain, post.account.acct)}"
+          target="_blank"
           ><i
             >Boosted ${moment(post.createdAt).fromNow()} by
             ${post.account.displayName || post.account.username}</i
@@ -226,6 +227,7 @@ export class PostElement extends HTMLElement {
           html`<a
             href="${computeLocalAcctUrl(this.domain, target.account.acct)}"
             class="chrome-link"
+            target="_blank"
             >@${target.account.acct}</a
           >`
         );

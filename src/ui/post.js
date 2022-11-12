@@ -66,7 +66,7 @@ const style = html`
     .user-box {
       display: flex;
       align-items: center;
-      margin-top: 1em;
+      margin: 1em 0;
     }
     #user-image {
       width: 48px;
@@ -86,7 +86,7 @@ const style = html`
 
     #media:not(:empty) {
       display: flex;
-      margin-top: 1em;
+      margin: 1em 0;
       gap: 12px;
     }
     #media masto-media {

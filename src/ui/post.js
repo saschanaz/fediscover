@@ -84,6 +84,10 @@ const style = html`
       text-overflow: ellipsis;
     }
 
+    #contents {
+      overflow-wrap: break-word;
+    }
+
     #media:not(:empty) {
       display: flex;
       margin: 1em 0;

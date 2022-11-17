@@ -1,6 +1,40 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <script type="module">
-  window.opener.postMessage(Object.fromEntries(new URLSearchParams(location.search.slice(1))));
-  close();
+  async function main() {
+    const params = new URLSearchParams(location.search.slice(1));
+    if (params.get("code")) {
+      window.opener.postMessage(Object.fromEntries(new URLSearchParams(location.search.slice(1))));
+      close();
+
+      // Apparently Chrome doesn't synchronously shutdown the JS context, so the explicit return.
+      // Firefox doesn't need this.
+      return;
+    }
+
+    const domain = params.get("rediscover-domain");
+    if (!domain) {
+      alert("No recognized parameter, closing.");
+      close();
+      return;
+    }
+
+    const { getOrFetchAppData } = await import("./src/authorize.js");
+    const { login } = await import("https://cdn.jsdelivr.net/npm/masto@4/+esm");
+
+    const masto = await login({ url: domain });
+
+    const redirectUri = new URL("redirect.html", location.href).toString();
+    const app = await getOrFetchAppData(masto, domain, redirectUri);
+
+    const url = new URL("/oauth/authorize", domain);
+    url.searchParams.append("response_type", "code");
+    url.searchParams.append("client_id", app.clientId);
+    url.searchParams.append("redirect_uri", redirectUri);
+    url.searchParams.append("scope", "read write");
+    url.searchParams.append("force_login", "true");
+    location.href = url;
+  }
+
+  await main();
 </script>

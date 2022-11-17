@@ -20,16 +20,10 @@ function eventFired(target, eventName) {
 
 /**
  * @param {string} domain
- * @param {string} clientId
- * @param {string} redirectUri
  */
-async function authorizeInPopup(domain, clientId, redirectUri) {
-  const url = new URL("/oauth/authorize", domain);
-  url.searchParams.append("response_type", "code");
-  url.searchParams.append("client_id", clientId);
-  url.searchParams.append("redirect_uri", redirectUri);
-  url.searchParams.append("scope", "read write");
-  url.searchParams.append("force_login", "true");
+async function authorizeInPopup(domain) {
+  const url = new URL(`redirect.html?`, location.href);
+  url.searchParams.set("rediscover-domain", domain);
   window.open(url);
 
   const ev = await eventFired(window, "message");
@@ -68,16 +62,25 @@ function sanitizeDomain(domain) {
   return domain;
 }
 
+/** @param {string} domain */
+async function getAppData(domain) {
+  const app = await idbKeyval.get("app");
+  if (app.website !== domain) {
+    throw new Error("Data doesn't match the domain");
+  }
+  return app;
+}
+
 /**
  * @param {import("../third_party/masto.js").MastoClient} masto
  * @param {string} domain
  * @param {string} redirectUri
  */
-async function getAppData(masto, domain, redirectUri) {
-  const app = await idbKeyval.get("app");
-  if (app?.website === domain) {
-    return app;
-  }
+export async function getOrFetchAppData(masto, domain, redirectUri) {
+  try {
+    return await getAppData(domain);
+  // deno-lint-ignore no-empty
+  } catch {}
 
   const created = await masto.apps.create({
     clientName: "Mizukidon",
@@ -92,13 +95,10 @@ async function getAppData(masto, domain, redirectUri) {
 async function authorizeClicked() {
   async function authorize() {
     const domain = sanitizeDomain(document.getElementById("domainInput").value);
-
-    const masto = await login({ url: domain });
+    const code = await authorizeInPopup(domain);
 
     const redirectUri = new URL("redirect.html", location.href).toString();
-    const app = await getAppData(masto, domain, redirectUri);
-
-    const code = await authorizeInPopup(domain, app.clientId, redirectUri);
+    const app = await getAppData(domain);
 
     const token = await obtainToken(
       domain,
@@ -108,24 +108,20 @@ async function authorizeClicked() {
       redirectUri
     );
 
-    masto.config.accessToken = token.access_token;
-    // TODO: Replace Axios
-    masto.http.axios.defaults.headers.Authorization = `Bearer ${token.access_token}`;
+    const masto = await login({ url: domain, accessToken: token.access_token });
 
     idbKeyval.set("accessToken", token.access_token);
 
     return masto;
   }
 
-  while (true) {
-    try {
-      const masto = await authorize();
-      document.getElementById("authorizeForm").remove();
-      return masto;
-    } catch (err) {
-      console.error(err);
-      alert(err);
-    }
+  try {
+    const masto = await authorize();
+    document.getElementById("authorizeForm").remove();
+    return masto;
+  } catch (err) {
+    console.error(err);
+    alert(err);
   }
 }
 

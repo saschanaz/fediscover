@@ -176,9 +176,7 @@ export class PostElement extends HTMLElement {
         .createContextualFragment(target.content);
       for (const mention of content.querySelectorAll(".u-url.mention")) {
         const { acct } = target.mentions.find((m) =>
-          [m.acct, m.username].includes(
-            mention.querySelector("span").textContent
-          )
+          [m.acct, m.username].includes(mention.textContent.slice(1))
         );
         mention.href = computeLocalAcctUrl(this.domain, acct);
       }

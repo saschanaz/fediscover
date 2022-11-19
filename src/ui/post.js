@@ -101,6 +101,12 @@ const style = html`
     .sensitive masto-media {
       filter: blur(5px);
     }
+
+    .emoji {
+      width: 1.2em;
+      height: 1.2em;
+      vertical-align: text-bottom;
+    }
   </style>
 `;
 
@@ -123,6 +129,63 @@ function computeLocalPostUrl(domain, post) {
  */
 function computeLocalAcctUrl(domain, acct) {
   return new URL(`web/@${acct}`, domain).toString();
+}
+
+/**
+ * @param {string} str
+ * @param {*} emojis
+ */
+function matchAllEmojis(str, emojis) {
+  const result = [];
+  for (const emoji of emojis) {
+    for (const match of str.matchAll(`:${emoji.shortcode}:`)) {
+      result.push({
+        start: match.index,
+        end: match.index + match[0].length,
+        emoji,
+      });
+    }
+  }
+  return result.sort((x, y) => x.start - y.start);
+}
+
+/**
+ * @param {string} str
+ * @param {*} emojis
+ */
+function renderEmojis(str, emojis) {
+  const matches = matchAllEmojis(str, emojis);
+  let lastMatchEnd = 0;
+
+  const nodes = [];
+  for (const match of matches) {
+    const shortcode = `:${match.emoji.shortcode}:`;
+    nodes.push(new Text(str.slice(lastMatchEnd, match.start)));
+    nodes.push(
+      html`
+        <img
+          class="emoji"
+          src="${match.emoji.staticUrl}"
+          alt="${shortcode}"
+          title="${shortcode}"
+        />
+      `
+    );
+    lastMatchEnd = match.end;
+  }
+  nodes.push(new Text(str.slice(lastMatchEnd)));
+
+  return nodes;
+}
+
+/**
+ * @param {string} str
+ * @param {*} emojis
+ */
+function replaceEmojis(str, emojis) {
+  return renderEmojis(str, emojis)
+    .map((node) => node.outerHTML || node.textContent)
+    .join("");
 }
 
 export class PostElement extends HTMLElement {
@@ -172,9 +235,10 @@ export class PostElement extends HTMLElement {
    */
   set post(post) {
     const renderContent = () => {
+      const replaced = replaceEmojis(target.content, target.emojis);
       const content = document
         .createRange()
-        .createContextualFragment(DOMPurify.sanitize(target.content));
+        .createContextualFragment(DOMPurify.sanitize(replaced));
       for (const mention of content.querySelectorAll(".u-url.mention")) {
         const { acct } = target.mentions.find((m) =>
           [m.acct, m.username].includes(mention.textContent.slice(1))
@@ -222,8 +286,14 @@ export class PostElement extends HTMLElement {
     const renderUserInfo = () => {
       this.shadowRoot.getElementById("user-image").src =
         target.account.avatarStatic;
-      this.shadowRoot.getElementById("user-name").textContent =
-        target.account.displayName || target.account.username;
+      this.shadowRoot
+        .getElementById("user-name")
+        .replaceChildren(
+          ...renderEmojis(
+            target.account.displayName || target.account.username,
+            target.account.emojis
+          )
+        );
       this.shadowRoot
         .getElementById("user-acct")
         .replaceChildren(

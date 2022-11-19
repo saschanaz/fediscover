@@ -31,6 +31,15 @@ async function renderRandomPosts(rediscover, parentElement) {
   }
 }
 
+/**
+ * @param {Rediscover} rediscover
+ * @param {Element} parentElement
+ */
+function scrollAndRender(rediscover, container) {
+  scrollTo({ top: 0, behavior: "instant" });
+  renderRandomPosts(rediscover, container);
+}
+
 async function main() {
   mastoReady = maybeAuthorizeViaForm(document.body);
 
@@ -40,15 +49,15 @@ async function main() {
 
   const container = html`<main class="container"></main>`;
   document.body.append(html`
-    <div class="d-flex justify-content-center">
+    ${container}
+    <div class="d-flex justify-content-center m-4">
       <button
         class="btn btn-primary"
-        onclick=${() => renderRandomPosts(rediscover, container)}
+        onclick=${() => scrollAndRender(rediscover, container)}
       >
         Refresh
       </button>
     </div>
-    ${container}
   `);
 
   // TODO: AbortSignal for refresh or at least disable the button until it finishes

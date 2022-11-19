@@ -1,4 +1,5 @@
 import html from "https://cdn.jsdelivr.net/npm/nanohtml@1/+esm";
+import DOMPurify from "https://cdn.jsdelivr.net/npm/dompurify@2/+esm";
 
 // Note: Ultimately replace this with Temporal, but we're not there yet
 import moment from "https://cdn.jsdelivr.net/npm/moment@2/+esm";
@@ -173,7 +174,7 @@ export class PostElement extends HTMLElement {
     const renderContent = () => {
       const content = document
         .createRange()
-        .createContextualFragment(target.content);
+        .createContextualFragment(DOMPurify.sanitize(target.content));
       for (const mention of content.querySelectorAll(".u-url.mention")) {
         const { acct } = target.mentions.find((m) =>
           [m.acct, m.username].includes(mention.textContent.slice(1))

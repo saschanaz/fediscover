@@ -277,7 +277,10 @@ export class PostElement extends HTMLElement {
           target="_blank"
           ><i
             >Boosted ${moment(post.createdAt).fromNow()} by
-            ${post.account.displayName || post.account.username}</i
+            ${renderEmojis(
+              post.account.displayName || post.account.username,
+              post.account.emojis
+            )}</i
           ></a
         >
       `);

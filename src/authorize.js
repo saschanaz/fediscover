@@ -2,6 +2,8 @@ import { login } from "https://cdn.jsdelivr.net/npm/masto@4/+esm";
 import * as idbKeyval from "https://cdn.jsdelivr.net/npm/idb-keyval@6/+esm";
 import html from "https://cdn.jsdelivr.net/npm/nanohtml@1/+esm";
 
+const SCOPES = "read:statuses read:accounts";
+
 /**
  * @param {EventTarget} target
  * @param {string} eventName
@@ -24,6 +26,7 @@ function eventFired(target, eventName) {
 async function authorizeInPopup(domain) {
   const url = new URL(`redirect.html?`, location.href);
   url.searchParams.set("rediscover-domain", domain);
+  url.searchParams.set("rediscover-scopes", SCOPES);
   window.open(url);
 
   const ev = await eventFired(window, "message");
@@ -43,7 +46,7 @@ async function obtainToken(domain, clientId, clientSecret, code, redirectUri) {
   url.searchParams.append("client_id", clientId);
   url.searchParams.append("client_secret", clientSecret);
   url.searchParams.append("redirect_uri", redirectUri);
-  url.searchParams.append("scope", "read write");
+  url.searchParams.append("scope", SCOPES);
   url.searchParams.append("code", code);
 
   const res = await fetch(url, { method: "POST" });
@@ -85,7 +88,7 @@ export async function getOrFetchAppData(masto, domain, redirectUri) {
   const created = await masto.apps.create({
     clientName: "Mizukidon",
     redirectUris: redirectUri,
-    scopes: "read write",
+    scopes: SCOPES,
     website: domain,
   });
   await idbKeyval.set("app", created);

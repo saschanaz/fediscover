@@ -26,12 +26,13 @@
 
     const redirectUri = new URL("redirect.html", location.href).toString();
     const app = await getOrFetchAppData(masto, domain, redirectUri);
+    const scopes = params.get("rediscover-scopes");
 
     const url = new URL("/oauth/authorize", domain);
     url.searchParams.append("response_type", "code");
     url.searchParams.append("client_id", app.clientId);
     url.searchParams.append("redirect_uri", redirectUri);
-    url.searchParams.append("scope", "read write");
+    url.searchParams.append("scope", scopes);
     url.searchParams.append("force_login", "true");
     location.href = url;
   }

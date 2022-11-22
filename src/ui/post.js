@@ -239,19 +239,25 @@ export class PostElement extends HTMLElement {
       const content = document
         .createRange()
         .createContextualFragment(DOMPurify.sanitize(replaced));
-      for (const mention of content.querySelectorAll(".u-url.mention")) {
-        const { acct } = target.mentions.find((m) =>
-          [m.acct, m.username].includes(mention.textContent.slice(1))
-        );
-        mention.href = computeLocalAcctUrl(this.domain, acct);
-      }
-      for (const hashtag of content.querySelectorAll(".mention.hashtag")) {
-        // Each instance can normalize hashtags as it wants.
-        // As it's a moving target, here we ignore `status.tags` and simply put tags/{tag},
-        // which will then be normalized by the instance automatically.
-        // See also https://github.com/mastodon/mastodon/pull/18795.
-        const tag = hashtag.querySelector("span").textContent;
-        hashtag.href = new URL(`/web/tags/${tag}`, this.domain).toString();
+      for (const anchor of content.querySelectorAll("a")) {
+        anchor.target = "_blank";
+
+        if (anchor.matches(".u-url.mention")) {
+          const { acct } = target.mentions.find((m) =>
+            [m.acct, m.username].includes(anchor.textContent.slice(1))
+          );
+          anchor.href = computeLocalAcctUrl(this.domain, acct);
+          continue;
+        }
+        if (anchor.matches(".mention.hashtag")) {
+          // Each instance can normalize hashtags as it wants.
+          // As it's a moving target, here we ignore `status.tags` and simply put tags/{tag},
+          // which will then be normalized by the instance automatically.
+          // See also https://github.com/mastodon/mastodon/pull/18795.
+          const tag = anchor.querySelector("span").textContent;
+          anchor.href = new URL(`/web/tags/${tag}`, this.domain).toString();
+          continue;
+        }
       }
 
       if (!target.spoilerText) {

@@ -95,6 +95,7 @@ export async function getOrFetchAppData(domain, redirectUri, scopes, nodeInfo) {
   if (nodeInfo?.software.name === "misskey" || scopes.includes("read:account")) {
     const app = {
       clientId: new URL("..", location.href).toString(),
+      website: domain,
     };
     await idbKeyval.set("app", app);
     return app;

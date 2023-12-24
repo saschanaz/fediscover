@@ -28,7 +28,7 @@
       return;
     }
 
-    const { getOrFetchAppData } = await import("./src/authorize.js");
+    const { getOrFetchAppData } = await import("../src/authorize.js");
     const { login } = await import("https://cdn.jsdelivr.net/npm/masto@4/+esm");
     const { default: pkce } = await import("https://cdn.jsdelivr.net/npm/pkce-challenge@4/+esm");
 

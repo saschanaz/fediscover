@@ -46,7 +46,7 @@
 
     const scopes = params.get("rediscover-scopes");
     const filteredScopes = scopes.split(" ").filter(s => authServer.scopes_supported.includes(s));
-    const redirectUri = new URL(location.href).toString();
+    const redirectUri = new URL(".", location.href).toString();
     const app = await getOrFetchAppData(domain, redirectUri, filteredScopes, nodeInfo);
     const pkcePair = await pkce();
     const state = crypto.randomUUID();

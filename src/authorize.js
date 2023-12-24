@@ -2,7 +2,11 @@ import { login } from "https://cdn.jsdelivr.net/npm/masto@4/+esm";
 import * as idbKeyval from "https://cdn.jsdelivr.net/npm/idb-keyval@6/+esm";
 import html from "https://cdn.jsdelivr.net/npm/nanohtml@1/+esm";
 
-const SCOPES = "read:statuses read:accounts";
+const SCOPES = [
+  "read:statuses", // Mastodon post read scope (free in Misskey)
+  "read:accounts", // Mastodon account scope
+  "read:account" // Misskey account scope
+].join(" ");
 
 /**
  * @param {EventTarget} target
@@ -81,17 +85,18 @@ async function getAppData(domain) {
  * @param {import("../third_party/masto.js").MastoClient} masto
  * @param {string} domain
  * @param {string} redirectUri
+ * @param {string} scopes
  */
-export async function getOrFetchAppData(masto, domain, redirectUri) {
+export async function getOrFetchAppData(masto, domain, redirectUri, scopes) {
   try {
     return await getAppData(domain);
   // deno-lint-ignore no-empty
   } catch {}
 
   const created = await masto.apps.create({
-    clientName: "Mizukidon",
+    clientName: "MastoRediscover",
     redirectUris: redirectUri,
-    scopes: SCOPES,
+    scopes,
     website: domain,
   });
   await idbKeyval.set("app", created);

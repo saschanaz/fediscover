@@ -33,28 +33,31 @@
     const { default: pkce } = await import("https://cdn.jsdelivr.net/npm/pkce-challenge@4/+esm");
 
     const masto = await login({ url: domain });
+    const authServer = await (
+      await fetch(new URL(".well-known/oauth-authorization-server", domain))
+    ).json().catch(() => ({
+      // Fallbacks for Mastodon defaults
+      authorization_endpoint: new URL("/oauth/authorize", domain),
+      token_endpoint: new URL("/oauth/token", domain),
+      scopes_supported: ["read:accounts", "read:statuses"]
+    }));
 
-    const redirectUri = new URL("redirect.html", location.href).toString();
-    const app = await getOrFetchAppData(masto, domain, redirectUri);
     const scopes = params.get("rediscover-scopes");
+    const filteredScopes = scopes.split(" ").filter(s => authServer.scopes_supported.includes(s)).join(" ");
+    const redirectUri = new URL("redirect.html", location.href).toString();
+    const app = await getOrFetchAppData(masto, domain, redirectUri, filteredScopes);
     const pkcePair = await pkce();
     const state = crypto.randomUUID();
     sessionStorage.setItem('oauthCodeVerifier', pkcePair.code_verifier);
     sessionStorage.setItem('oauthState', state);
 
-    const authServer = await (
-      await fetch(new URL(".well-known/oauth-authorization-server", domain))
-    ).json().catch(() => ({
-      authorization_endpoint: new URL("/oauth/authorize", domain),
-      token_endpoint: new URL("/oauth/token", domain),
-    }));
     sessionStorage.setItem('oauthTokenEndpoint', authServer.token_endpoint);
 
     const url = new URL(authServer.authorization_endpoint);
     url.searchParams.append("response_type", "code");
     url.searchParams.append("client_id", app.clientId);
     url.searchParams.append("redirect_uri", redirectUri);
-    url.searchParams.append("scope", scopes);
+    url.searchParams.append("scope", filteredScopes);
     url.searchParams.append("code_challenge", pkcePair.code_challange);
     url.searchParams.append("state", state);
     url.searchParams.append("force_login", "true");

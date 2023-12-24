@@ -5,7 +5,7 @@ import html from "https://cdn.jsdelivr.net/npm/nanohtml@1/+esm";
 const SCOPES = [
   "read:statuses", // Mastodon post read scope (free in Misskey)
   "read:accounts", // Mastodon account scope
-  "read:account" // Misskey account scope
+  "read:account", // Misskey account scope
 ].join(" ");
 
 /**
@@ -46,17 +46,29 @@ async function authorizeInPopup(domain) {
  * @param {string} args.redirectUri
  * @param {string} args.codeVerifier
  */
-async function obtainToken({ endpoint, clientId, clientSecret, code, redirectUri, codeVerifier }) {
-  const url = new URL(endpoint);
-  url.searchParams.append("grant_type", "authorization_code");
-  url.searchParams.append("client_id", clientId);
-  url.searchParams.append("client_secret", clientSecret);
-  url.searchParams.append("redirect_uri", redirectUri);
-  url.searchParams.append("scope", SCOPES);
-  url.searchParams.append("code", code);
-  url.searchParams.append("code_verifier", codeVerifier);
-
-  const res = await fetch(url, { method: "POST" });
+async function obtainToken({
+  endpoint,
+  clientId,
+  clientSecret,
+  code,
+  redirectUri,
+  codeVerifier,
+}) {
+  const res = await fetch(endpoint, {
+    method: "POST",
+    body: JSON.stringify({
+      grant_type: "authorization_code",
+      client_id: clientId,
+      client_secret: clientSecret,
+      redirect_uri: redirectUri,
+      scope: SCOPES,
+      code: code,
+      code_verifier: codeVerifier,
+    }),
+    headers: {
+      "Content-Type": "application/json"
+    }
+  });
   const json = await res.json();
   return json;
 }
@@ -89,10 +101,13 @@ async function getAppData(domain) {
 export async function getOrFetchAppData(domain, redirectUri, scopes, nodeInfo) {
   try {
     return await getAppData(domain);
-  // deno-lint-ignore no-empty
+    // deno-lint-ignore no-empty
   } catch {}
 
-  if (nodeInfo?.software.name === "misskey" || scopes.includes("read:account")) {
+  if (
+    nodeInfo?.software.name === "misskey" ||
+    scopes.includes("read:account")
+  ) {
     const app = {
       clientId: new URL("..", location.href).toString(),
       website: domain,

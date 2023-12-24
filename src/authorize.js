@@ -82,21 +82,29 @@ async function getAppData(domain) {
 }
 
 /**
- * @param {import("../third_party/masto.js").MastoClient} masto
  * @param {string} domain
  * @param {string} redirectUri
- * @param {string} scopes
+ * @param {string[]} scopes
  */
-export async function getOrFetchAppData(masto, domain, redirectUri, scopes) {
+export async function getOrFetchAppData(domain, redirectUri, scopes, nodeInfo) {
   try {
     return await getAppData(domain);
   // deno-lint-ignore no-empty
   } catch {}
 
+  if (nodeInfo?.software.name === "misskey" || scopes.includes("read:account")) {
+    const app = {
+      clientId: new URL("..", location.href).toString(),
+    };
+    await idbKeyval.set("app", app);
+    return app;
+  }
+
+  const masto = await login({ url: domain });
   const created = await masto.apps.create({
     clientName: "MastoRediscover",
     redirectUris: redirectUri,
-    scopes,
+    scopes: scopes.join(" "),
     website: domain,
   });
   await idbKeyval.set("app", created);

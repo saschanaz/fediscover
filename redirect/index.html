@@ -32,20 +32,22 @@
     const { login } = await import("https://cdn.jsdelivr.net/npm/masto@4/+esm");
     const { default: pkce } = await import("https://cdn.jsdelivr.net/npm/pkce-challenge@4/+esm");
 
-    const masto = await login({ url: domain });
-    const authServer = await (
-      await fetch(new URL(".well-known/oauth-authorization-server", domain))
-    ).json().catch(() => ({
-      // Fallbacks for Mastodon defaults
-      authorization_endpoint: new URL("/oauth/authorize", domain),
-      token_endpoint: new URL("/oauth/token", domain),
-      scopes_supported: ["read:accounts", "read:statuses"]
-    }));
+    const nodeInfoList = await fetch(new URL(".well-known/nodeinfo", domain)).then(res => res.json());
+    const nodeInfo = await fetch(nodeInfoList.links[0].href).then(res => res.json()).catch(() => {});
+
+    const authServer = await fetch(new URL(".well-known/oauth-authorization-server", domain))
+      .then(res => res.json())
+      .catch(() => ({
+        // Fallbacks for Mastodon defaults
+        authorization_endpoint: new URL("/oauth/authorize", domain),
+        token_endpoint: new URL("/oauth/token", domain),
+        scopes_supported: ["read:accounts", "read:statuses"]
+      }));
 
     const scopes = params.get("rediscover-scopes");
-    const filteredScopes = scopes.split(" ").filter(s => authServer.scopes_supported.includes(s)).join(" ");
+    const filteredScopes = scopes.split(" ").filter(s => authServer.scopes_supported.includes(s));
     const redirectUri = new URL("redirect", location.href).toString();
-    const app = await getOrFetchAppData(masto, domain, redirectUri, filteredScopes);
+    const app = await getOrFetchAppData(domain, redirectUri, filteredScopes, nodeInfo);
     const pkcePair = await pkce();
     const state = crypto.randomUUID();
     sessionStorage.setItem('oauthCodeVerifier', pkcePair.code_verifier);
@@ -56,7 +58,7 @@
     url.searchParams.append("response_type", "code");
     url.searchParams.append("client_id", app.clientId);
     url.searchParams.append("redirect_uri", redirectUri);
-    url.searchParams.append("scope", filteredScopes);
+    url.searchParams.append("scope", filteredScopes.join(" "));
     url.searchParams.append("code_challenge", pkcePair.code_challange);
     url.searchParams.append("state", state);
     url.searchParams.append("force_login", "true");

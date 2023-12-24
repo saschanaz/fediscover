@@ -11,7 +11,8 @@
       }
 
       const data = Object.fromEntries(new URLSearchParams(location.search.slice(1)));
-      data.code_verifier = sessionStorage.getItem("oauthCodeVerifier");
+      data.codeVerifier = sessionStorage.getItem("oauthCodeVerifier");
+      data.tokenEndpoint = sessionStorage.getItem("oauthTokenEndpoint");
       window.opener.postMessage(data);
       close();
 
@@ -41,7 +42,15 @@
     sessionStorage.setItem('oauthCodeVerifier', pkcePair.code_verifier);
     sessionStorage.setItem('oauthState', state);
 
-    const url = new URL("/oauth/authorize", domain);
+    const authServer = await (
+      await fetch(new URL(".well-known/oauth-authorization-server", domain))
+    ).json().catch(() => ({
+      authorization_endpoint: new URL("/oauth/authorize", domain),
+      token_endpoint: new URL("/oauth/token", domain),
+    }));
+    sessionStorage.setItem('oauthTokenEndpoint', authServer.token_endpoint);
+
+    const url = new URL(authServer.authorization_endpoint);
     url.searchParams.append("response_type", "code");
     url.searchParams.append("client_id", app.clientId);
     url.searchParams.append("redirect_uri", redirectUri);

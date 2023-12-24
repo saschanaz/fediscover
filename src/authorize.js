@@ -35,15 +35,15 @@ async function authorizeInPopup(domain) {
 
 /**
  * @param {object} args
- * @param {string} args.domain
+ * @param {string} args.endpoint
  * @param {string} args.clientId
  * @param {string} args.clientSecret
  * @param {string} args.code
  * @param {string} args.redirectUri
  * @param {string} args.codeVerifier
  */
-async function obtainToken({ domain, clientId, clientSecret, code, redirectUri, codeVerifier }) {
-  const url = new URL("/oauth/token", domain);
+async function obtainToken({ endpoint, clientId, clientSecret, code, redirectUri, codeVerifier }) {
+  const url = new URL(endpoint);
   url.searchParams.append("grant_type", "authorization_code");
   url.searchParams.append("client_id", clientId);
   url.searchParams.append("client_secret", clientSecret);
@@ -107,7 +107,7 @@ async function authorizeClicked() {
     const app = await getAppData(domain);
 
     const token = await obtainToken({
-      domain,
+      endpoint: data.tokenEndpoint,
       clientId: app.clientId,
       clientSecret: app.clientSecret,
       code: data.code,

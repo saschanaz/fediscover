@@ -30,17 +30,19 @@ async function authorizeInPopup(domain) {
   window.open(url);
 
   const ev = await eventFired(window, "message");
-  return ev.data.code;
+  return ev.data;
 }
 
 /**
- * @param {string} domain
- * @param {string} clientId
- * @param {string} clientSecret
- * @param {string} code
- * @param {string} redirectUri
+ * @param {object} args
+ * @param {string} args.domain
+ * @param {string} args.clientId
+ * @param {string} args.clientSecret
+ * @param {string} args.code
+ * @param {string} args.redirectUri
+ * @param {string} args.codeVerifier
  */
-async function obtainToken(domain, clientId, clientSecret, code, redirectUri) {
+async function obtainToken({ domain, clientId, clientSecret, code, redirectUri, codeVerifier }) {
   const url = new URL("/oauth/token", domain);
   url.searchParams.append("grant_type", "authorization_code");
   url.searchParams.append("client_id", clientId);
@@ -48,6 +50,7 @@ async function obtainToken(domain, clientId, clientSecret, code, redirectUri) {
   url.searchParams.append("redirect_uri", redirectUri);
   url.searchParams.append("scope", SCOPES);
   url.searchParams.append("code", code);
+  url.searchParams.append("code_verifier", codeVerifier);
 
   const res = await fetch(url, { method: "POST" });
   const json = await res.json();
@@ -98,18 +101,19 @@ export async function getOrFetchAppData(masto, domain, redirectUri) {
 async function authorizeClicked() {
   async function authorize() {
     const domain = sanitizeDomain(document.getElementById("domainInput").value);
-    const code = await authorizeInPopup(domain);
+    const data = await authorizeInPopup(domain);
 
     const redirectUri = new URL("redirect.html", location.href).toString();
     const app = await getAppData(domain);
 
-    const token = await obtainToken(
+    const token = await obtainToken({
       domain,
-      app.clientId,
-      app.clientSecret,
-      code,
-      redirectUri
-    );
+      clientId: app.clientId,
+      clientSecret: app.clientSecret,
+      code: data.code,
+      codeVerifier: data.codeVerifier,
+      redirectUri,
+    });
 
     const masto = await login({ url: domain, accessToken: token.access_token });
 

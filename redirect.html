@@ -4,7 +4,15 @@
   async function main() {
     const params = new URLSearchParams(location.search.slice(1));
     if (params.get("code")) {
-      window.opener.postMessage(Object.fromEntries(new URLSearchParams(location.search.slice(1))));
+      if (params.get("state") !== sessionStorage.getItem("oauthState")) {
+        alert("Unauthorized access");
+        close();
+        return;
+      }
+
+      const data = Object.fromEntries(new URLSearchParams(location.search.slice(1)));
+      data.code_verifier = sessionStorage.getItem("oauthCodeVerifier");
+      window.opener.postMessage(data);
       close();
 
       // Apparently Chrome doesn't synchronously shutdown the JS context, so the explicit return.
@@ -21,18 +29,25 @@
 
     const { getOrFetchAppData } = await import("./src/authorize.js");
     const { login } = await import("https://cdn.jsdelivr.net/npm/masto@4/+esm");
+    const { default: pkce } = await import("https://cdn.jsdelivr.net/npm/pkce-challenge@4/+esm");
 
     const masto = await login({ url: domain });
 
     const redirectUri = new URL("redirect.html", location.href).toString();
     const app = await getOrFetchAppData(masto, domain, redirectUri);
     const scopes = params.get("rediscover-scopes");
+    const pkcePair = await pkce();
+    const state = crypto.randomUUID();
+    sessionStorage.setItem('oauthCodeVerifier', pkcePair.code_verifier);
+    sessionStorage.setItem('oauthState', state);
 
     const url = new URL("/oauth/authorize", domain);
     url.searchParams.append("response_type", "code");
     url.searchParams.append("client_id", app.clientId);
     url.searchParams.append("redirect_uri", redirectUri);
     url.searchParams.append("scope", scopes);
+    url.searchParams.append("code_challenge", pkcePair.code_challange);
+    url.searchParams.append("state", state);
     url.searchParams.append("force_login", "true");
     location.href = url;
   }

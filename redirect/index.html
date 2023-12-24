@@ -44,13 +44,12 @@
 
     const scopes = params.get("rediscover-scopes");
     const filteredScopes = scopes.split(" ").filter(s => authServer.scopes_supported.includes(s)).join(" ");
-    const redirectUri = new URL("redirect.html", location.href).toString();
+    const redirectUri = new URL("redirect", location.href).toString();
     const app = await getOrFetchAppData(masto, domain, redirectUri, filteredScopes);
     const pkcePair = await pkce();
     const state = crypto.randomUUID();
     sessionStorage.setItem('oauthCodeVerifier', pkcePair.code_verifier);
     sessionStorage.setItem('oauthState', state);
-
     sessionStorage.setItem('oauthTokenEndpoint', authServer.token_endpoint);
 
     const url = new URL(authServer.authorization_endpoint);

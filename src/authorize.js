@@ -28,7 +28,7 @@ function eventFired(target, eventName) {
  * @param {string} domain
  */
 async function authorizeInPopup(domain) {
-  const url = new URL(`redirect.html?`, location.href);
+  const url = new URL(`redirect`, location.href);
   url.searchParams.set("rediscover-domain", domain);
   url.searchParams.set("rediscover-scopes", SCOPES);
   window.open(url);
@@ -108,7 +108,7 @@ async function authorizeClicked() {
     const domain = sanitizeDomain(document.getElementById("domainInput").value);
     const data = await authorizeInPopup(domain);
 
-    const redirectUri = new URL("redirect.html", location.href).toString();
+    const redirectUri = new URL("redirect", location.href).toString();
     const app = await getAppData(domain);
 
     const token = await obtainToken({

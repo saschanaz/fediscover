@@ -1,5 +1,6 @@
 html, body {
   background-color: #4d1212;
+  height: 100%;
 }
 
 .masto-header {

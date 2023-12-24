@@ -33,16 +33,26 @@
     const { default: pkce } = await import("https://cdn.jsdelivr.net/npm/pkce-challenge@4/+esm");
 
     const nodeInfoList = await fetch(new URL(".well-known/nodeinfo", domain)).then(res => res.json());
-    const nodeInfo = await fetch(nodeInfoList.links[0].href).then(res => res.json()).catch(() => {});
+    const nodeInfo = await fetch(nodeInfoList.links[0].href).then(res => res.json()).catch(() => { });
 
     const authServer = await fetch(new URL(".well-known/oauth-authorization-server", domain))
       .then(res => res.json())
-      .catch(() => ({
-        // Fallbacks for Mastodon defaults
-        authorization_endpoint: new URL("/oauth/authorize", domain),
-        token_endpoint: new URL("/oauth/token", domain),
-        scopes_supported: ["read:accounts", "read:statuses"]
-      }));
+      .catch(() => {
+        if (nodeInfo?.software.name === "misskey") {
+          return {
+            // Fallbacks for Misskey defaults
+            authorization_endpoint: new URL("/oauth/authorize", domain),
+            token_endpoint: new URL("/oauth/token", domain),
+            scopes_supported: ["read:account"]
+          };
+        }
+        return {
+          // Fallbacks for Mastodon defaults
+          authorization_endpoint: new URL("/oauth/authorize", domain),
+          token_endpoint: new URL("/oauth/token", domain),
+          scopes_supported: ["read:accounts", "read:statuses"]
+        };
+      });
 
     const scopes = params.get("rediscover-scopes");
     const filteredScopes = scopes.split(" ").filter(s => authServer.scopes_supported.includes(s));

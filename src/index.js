@@ -1,32 +1,32 @@
 import { maybeAuthorizeViaForm } from "./authorize.js";
 import { Rediscover } from "./rediscover.js";
-import { PostElement } from "./ui/post.js";
+import { NoteElement } from "./ui/note.js";
 import html from "https://cdn.jsdelivr.net/npm/nanohtml@1/+esm";
 
-/** @type {Promise<import("../third_party/masto.js").MastoClient>} */
-export let mastoReady;
+/** @type {Promise<import("./api/misskey.js").default>} */
+export let apiReady;
 
 
 /**
  * @param {Rediscover} rediscover
  * @param {Element} parentElement
  */
-async function renderRandomPosts(rediscover, parentElement) {
+async function renderRandomNotes(rediscover, parentElement) {
   // clear the element
   parentElement.replaceChildren();
 
   for (const following of await rediscover.maybeFetchActiveFollowings()) {
-    const view = new PostElement(rediscover.masto.config.url, following);
+    const view = new NoteElement(rediscover.api.origin, following);
     parentElement.append(view);
 
     // lazy rendering
-    rediscover.maybeFetchRandomPostFromAccount(following.id).then((post) => {
-      if (!post) {
+    rediscover.maybeFetchRandomNoteFromUser(following.id).then((note) => {
+      if (!note) {
         view.remove();
         return;
       }
-      view.lang = post.language || "";
-      view.post = post;
+      view.lang = note.language || "";
+      view.note = note;
     });
   }
 }
@@ -37,15 +37,15 @@ async function renderRandomPosts(rediscover, parentElement) {
  */
 function scrollAndRender(rediscover, container) {
   scrollTo({ top: 0, behavior: "instant" });
-  renderRandomPosts(rediscover, container);
+  renderRandomNotes(rediscover, container);
 }
 
 async function main() {
-  mastoReady = maybeAuthorizeViaForm(document.body);
+  apiReady = maybeAuthorizeViaForm(document.body);
 
-  const masto = await mastoReady;
+  const api = await apiReady;
 
-  const rediscover = new Rediscover(masto);
+  const rediscover = new Rediscover(api);
 
   const container = html`<main class="container"></main>`;
   document.body.append(html`
@@ -61,7 +61,7 @@ async function main() {
   `);
 
   // TODO: AbortSignal for refresh or at least disable the button until it finishes
-  renderRandomPosts(rediscover, container);
+  renderRandomNotes(rediscover, container);
 }
 
 await main();

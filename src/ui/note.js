@@ -98,7 +98,7 @@ const style = html`
       width: 96px;
       height: 96px;
     }
-    .sensitive masto-media {
+    masto-media[sensitive] {
       filter: blur(5px);
     }
 
@@ -111,38 +111,23 @@ const style = html`
 `;
 
 /**
- * TODO: Mastodon 4.0 is removing /web prefix.
- * https://github.com/mastodon/mastodon/pull/19319
- * For now they will maintain the redirection,
- * and we also need to keep it for backward compatibility.
- *
- * @param {string} domain
- * @param {*} post
- */
-function computeLocalPostUrl(domain, post) {
-  return new URL(`web/@${post.account.acct}/${post.id}`, domain).toString();
-}
-
-/**
- * @param {string} domain
- * @param {string} acct
- */
-function computeLocalAcctUrl(domain, acct) {
-  return new URL(`web/@${acct}`, domain).toString();
-}
-
-/**
  * @param {string} str
  * @param {*} emojis
  */
 function matchAllEmojis(str, emojis) {
+  if (!emojis) {
+    return [];
+  }
   const result = [];
-  for (const emoji of emojis) {
-    for (const match of str.matchAll(`:${emoji.shortcode}:`)) {
+  for (const [shortcode, url] of Object.entries(emojis)) {
+    for (const match of str.matchAll(`:${shortcode}:`)) {
       result.push({
         start: match.index,
         end: match.index + match[0].length,
-        emoji,
+        emoji: {
+          shortcode,
+          url
+        },
       });
     }
   }
@@ -165,7 +150,7 @@ function renderEmojis(str, emojis) {
       html`
         <img
           class="emoji"
-          src="${match.emoji.staticUrl}"
+          src="${match.emoji.url}"
           alt="${shortcode}"
           title="${shortcode}"
         />
@@ -183,13 +168,16 @@ function renderEmojis(str, emojis) {
  * @param {*} emojis
  */
 function replaceEmojis(str, emojis) {
+  if (!str) {
+    return "";
+  }
   return renderEmojis(str, emojis)
     .map((node) => node.outerHTML || node.textContent)
     .join("");
 }
 
-export class PostElement extends HTMLElement {
-  #post;
+export class NoteElement extends HTMLElement {
+  #note;
 
   /**
    * @param {string} domain
@@ -206,7 +194,7 @@ export class PostElement extends HTMLElement {
     this.shadowRoot.append(
       style.cloneNode(true),
       html`
-        <p id="reblog-info"></p>
+        <p id="renote-info"></p>
         <div class="user-box">
           <img id="user-image" />
           <div class="user-name-and-acct">
@@ -225,17 +213,17 @@ export class PostElement extends HTMLElement {
     );
   }
 
-  get post() {
-    return this.#post;
+  get note() {
+    return this.#note;
   }
 
   /**
-   * @param {*} post
+   * @param {*} note
    * @returns
    */
-  set post(post) {
+  set note(note) {
     const renderContent = () => {
-      const replaced = replaceEmojis(target.content, target.emojis);
+      const replaced = replaceEmojis(target.data.text, target.data.emojis);
       const content = document
         .createRange()
         .createContextualFragment(DOMPurify.sanitize(replaced));
@@ -273,19 +261,19 @@ export class PostElement extends HTMLElement {
     };
 
     const maybeRenderReblogInfo = () => {
-      if (!post.reblog) {
+      if (!note.renote) {
         return;
       }
-      this.shadowRoot.getElementById("reblog-info").replaceChildren(html`
+      this.shadowRoot.getElementById("renote-info").replaceChildren(html`
         <a
           class="chrome-link"
-          href="${computeLocalAcctUrl(this.domain, post.account.acct)}"
+          href="${note.localUserUrl}"
           target="_blank"
           ><i
-            >Boosted ${moment(post.createdAt).fromNow()} by
+            >Boosted ${moment(note.data.createdAt).fromNow()} by
             ${renderEmojis(
-              post.account.displayName || post.account.username,
-              post.account.emojis
+              note.data.user.name || note.data.user.username,
+              note.data.user.emojis
             )}</i
           ></a
         >
@@ -294,40 +282,45 @@ export class PostElement extends HTMLElement {
 
     const renderUserInfo = () => {
       this.shadowRoot.getElementById("user-image").src =
-        target.account.avatarStatic;
+        target.data.user.avatarUrl;
       this.shadowRoot
         .getElementById("user-name")
         .replaceChildren(
           ...renderEmojis(
-            target.account.displayName || target.account.username,
-            target.account.emojis
+            target.data.user.name || target.data.user.username,
+            target.data.user.emojis
           )
         );
       this.shadowRoot
         .getElementById("user-acct")
         .replaceChildren(
           html`<a
-            href="${computeLocalAcctUrl(this.domain, target.account.acct)}"
+            href="${target.localUserUrl}"
             class="chrome-link"
             target="_blank"
-            >@${target.account.acct}</a
+            >@${target.acct}</a
           >`
         );
     };
 
     const renderMedia = () => {
-      for (const attachment of target.mediaAttachments) {
+      for (const file of target.data.files.filter(f => f.type.startsWith("image/"))) {
+        const element = new MediaElement(file)
+        if (file.isSensitive) {
+          element.setAttribute("sensitive", "");
+        }
         this.shadowRoot
           .getElementById("media")
-          .append(new MediaElement(attachment));
+          .append(element);
       }
     };
 
-    this.#post = post;
+    this.#note = note;
 
     maybeRenderReblogInfo();
 
-    const target = post.reblog ?? post;
+    // TODO: support quote
+    const target = note.renote ?? note;
     renderUserInfo();
 
     const newChild = html`
@@ -339,15 +332,14 @@ export class PostElement extends HTMLElement {
 
     this.shadowRoot
       .getElementById("media")
-      .classList.toggle("sensitive", target.sensitive);
+      .classList.toggle("sensitive", !!target.data.comment);
     renderMedia();
 
-    this.shadowRoot.getElementById("timestamp-anchor").href =
-      computeLocalPostUrl(this.domain, target);
+    this.shadowRoot.getElementById("timestamp-anchor").href = target.localUrl;
     this.shadowRoot.getElementById("timestamp-time").textContent = moment(
       target.createdAt
     ).fromNow();
   }
 }
 
-customElements.define("masto-post", PostElement);
+customElements.define("masto-note", NoteElement);

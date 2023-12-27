@@ -45,6 +45,7 @@ async function authorizeInPopup(domain) {
  * @param {string} args.code
  * @param {string} args.redirectUri
  * @param {string} args.codeVerifier
+ * @param {string} args.scope
  */
 async function obtainToken({
   endpoint,
@@ -53,6 +54,7 @@ async function obtainToken({
   code,
   redirectUri,
   codeVerifier,
+  scope,
 }) {
   const res = await fetch(endpoint, {
     method: "POST",
@@ -61,7 +63,7 @@ async function obtainToken({
       client_id: clientId,
       client_secret: clientSecret,
       redirect_uri: redirectUri,
-      scope: SCOPES,
+      scope,
       code: code,
       code_verifier: codeVerifier,
     }),
@@ -141,6 +143,7 @@ async function authorizeClicked() {
       clientSecret: app.clientSecret,
       code: data.code,
       codeVerifier: data.codeVerifier,
+      scope: data.scope,
       redirectUri,
     });
 

@@ -13,6 +13,7 @@
       const data = Object.fromEntries(new URLSearchParams(location.search.slice(1)));
       data.codeVerifier = sessionStorage.getItem("oauthCodeVerifier");
       data.tokenEndpoint = sessionStorage.getItem("oauthTokenEndpoint");
+      data.scope = sessionStorage.getItem("oauthScope");
       window.opener.postMessage(data);
       close();
 
@@ -63,6 +64,7 @@
     sessionStorage.setItem('oauthCodeVerifier', pkcePair.code_verifier);
     sessionStorage.setItem('oauthState', state);
     sessionStorage.setItem('oauthTokenEndpoint', authServer.token_endpoint);
+    sessionStorage.setItem('oauthScope', filteredScopes.join(" "));
 
     const url = new URL(authServer.authorization_endpoint);
     url.searchParams.append("response_type", "code");

@@ -100,15 +100,15 @@ class MisskeyNote {
   }
 
   get localUserUrl() {
-    return new URL(this.acct, this.#origin);
+    return new URL(this.atUser, this.#origin);
   }
 
-  get acct() {
+  get atUser() {
     const { username, host } = this.#note.user;
     if (!host) {
-      return username
+      return `@${username}`
     }
-    return `${username}@${host}`
+    return `@${username}@${host}`
   }
 
   get renote() {

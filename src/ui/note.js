@@ -298,7 +298,7 @@ export class NoteElement extends HTMLElement {
             href="${target.localUserUrl}"
             class="chrome-link"
             target="_blank"
-            >@${target.acct}</a
+            >${target.atUser}</a
           >`
         );
     };
@@ -319,7 +319,7 @@ export class NoteElement extends HTMLElement {
 
     maybeRenderReblogInfo();
 
-    // TODO: support quote
+    // TODO: support quote, for now at least say there's a quote
     const target = note.renote ?? note;
     renderUserInfo();
 

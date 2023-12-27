@@ -71,7 +71,7 @@
     url.searchParams.append("client_id", app.clientId);
     url.searchParams.append("redirect_uri", redirectUri);
     url.searchParams.append("scope", filteredScopes.join(" "));
-    url.searchParams.append("code_challenge", pkcePair.code_challange);
+    url.searchParams.append("code_challenge", pkcePair.code_challenge);
     url.searchParams.append("code_challenge_method", "S256");
     url.searchParams.append("state", state);
     url.searchParams.append("force_login", "true");

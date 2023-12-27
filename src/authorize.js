@@ -161,6 +161,7 @@ async function authorizeClicked() {
   } catch (err) {
     console.error(err);
     alert(err);
+    throw err;
   }
 }
 

@@ -1,16 +1,16 @@
 import html from "https://cdn.jsdelivr.net/npm/nanohtml@1/+esm";
 
 export class MediaElement extends HTMLElement {
-  #attachment;
+  file;
 
-  get attachment() {
-    return this.#attachment;
+  get file() {
+    return this.file;
   }
 
-  constructor(attachment) {
+  constructor(file) {
     super();
 
-    this.#attachment = attachment;
+    this.file = file;
 
     this.attachShadow({ mode: "open" });
     this.shadowRoot.append(
@@ -42,16 +42,16 @@ export class MediaElement extends HTMLElement {
         <img
           id="img"
           loading="lazy"
-          src="${attachment.previewUrl}"
-          alt="${attachment.description}"
-          title="${attachment.description}"
+          src="${file.thumbnailUrl}"
+          alt="${file.comment}"
+          title="${file.comment}"
         />
         <dialog id="dialog">
           <img
             loading="lazy"
-            src="${attachment.url}"
-            alt="${attachment.description}"
-            title="${attachment.description}"
+            src="${file.url}"
+            alt="${file.comment}"
+            title="${file.comment}"
           />
         </dialog>
       `
@@ -61,7 +61,7 @@ export class MediaElement extends HTMLElement {
     const dialog = this.shadowRoot.getElementById("dialog");
     this.shadowRoot.getElementById("img").addEventListener("click", () => {
       // TODO: support others
-      if (attachment.type === "image") {
+      if (file.type.startsWith("image/")) {
         dialog.showModal();
       }
     });

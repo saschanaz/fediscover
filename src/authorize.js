@@ -1,6 +1,8 @@
-import { login } from "https://cdn.jsdelivr.net/npm/masto@4/+esm";
+import { login as mastoLogin } from "https://cdn.jsdelivr.net/npm/masto@4/+esm";
 import * as idbKeyval from "https://cdn.jsdelivr.net/npm/idb-keyval@6/+esm";
 import html from "https://cdn.jsdelivr.net/npm/nanohtml@1/+esm";
+
+import { login } from "./api/index.js";
 
 const SCOPES = [
   "read:statuses", // Mastodon post read scope (free in Misskey)
@@ -118,7 +120,7 @@ export async function getOrFetchAppData(domain, redirectUri, scopes, nodeInfo) {
     return app;
   }
 
-  const masto = await login({ url: domain });
+  const masto = await mastoLogin({ url: domain });
   const created = await masto.apps.create({
     clientName: "MastoRediscover",
     redirectUris: redirectUri,
@@ -147,11 +149,11 @@ async function authorizeClicked() {
       redirectUri,
     });
 
-    const masto = await login({ url: domain, accessToken: token.access_token });
+    const api = await login({ app, accessToken: token.access_token });
 
     idbKeyval.set("accessToken", token.access_token);
 
-    return masto;
+    return api;
   }
 
   try {
@@ -171,7 +173,7 @@ async function authorizeClicked() {
 export async function maybeAuthorizeViaForm(parentElement) {
   const [app, token] = await idbKeyval.getMany(["app", "accessToken"]);
   if (app && token) {
-    return await login({ url: app.website, accessToken: token });
+    return await login({ app, accessToken: token });
   }
   return await new Promise((resolve) => {
     parentElement.append(html`

@@ -342,7 +342,7 @@ export class NoteElement extends HTMLElement {
 
     this.shadowRoot.getElementById("timestamp-anchor").href = target.localUrl;
     this.shadowRoot.getElementById("timestamp-time").textContent = moment(
-      target.createdAt
+      target.data.createdAt
     ).fromNow();
   }
 }

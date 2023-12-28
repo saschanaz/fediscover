@@ -267,7 +267,7 @@ export class NoteElement extends HTMLElement {
       `;
     };
 
-    const maybeRenderReblogInfo = () => {
+    const maybeRenderRenoteInfo = () => {
       if (!note.renote) {
         return;
       }
@@ -277,7 +277,7 @@ export class NoteElement extends HTMLElement {
           href="${note.localUserUrl}"
           target="_blank"
           ><i
-            >Boosted ${moment(note.data.createdAt).fromNow()} by
+            >Renoted ${moment(note.data.createdAt).fromNow()} by
             ${renderEmojis(
               note.data.user.name || note.data.user.username,
               note.data.user.emojis
@@ -324,22 +324,20 @@ export class NoteElement extends HTMLElement {
 
     this.#note = note;
 
-    maybeRenderReblogInfo();
+    maybeRenderRenoteInfo();
 
-    // TODO: support quote, for now at least say there's a quote
+    // TODO: support quote
     const target = note.renote ?? note;
     renderUserInfo();
 
     const newChild = html`
       ${renderContent()} ${target.poll ? `(poll exists)` : ""}
       ${target.card ? `(card exists)` : ""}
+      ${note.renote && note.text ? `(quote text exists)` : ""}
       ${target.sensitive ? `(marked as sensitive)` : ""}
     `;
     this.shadowRoot.getElementById("contents").replaceChildren(newChild);
 
-    this.shadowRoot
-      .getElementById("media")
-      .classList.toggle("sensitive", !!target.data.comment);
     renderMedia();
 
     this.shadowRoot.getElementById("timestamp-anchor").href = target.localUrl;

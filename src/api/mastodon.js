@@ -69,7 +69,6 @@ function remapUser(user) {
     username: user.username,
     emojis: remapEmojis(user.emojis),
     avatarUrl: user.avatarStatic,
-
   }
 }
 

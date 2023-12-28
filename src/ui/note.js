@@ -111,6 +111,14 @@ const style = html`
 `;
 
 /**
+ * @param {string} domain
+ * @param {string} acct
+ */
+function computeLocalAcctUrl(domain, acct) {
+  return new URL(`@${acct}`, domain).toString();
+}
+
+/**
  * @param {string} str
  * @param {*} emojis
  */
@@ -181,13 +189,12 @@ export class NoteElement extends HTMLElement {
 
   /**
    * @param {string} domain
-   * @param {*} following
    */
-  constructor(domain, following) {
+  constructor(domain) {
     super();
     this.domain = domain;
     this.attachShadow({ mode: "open" });
-    this.#initializeTree(following);
+    this.#initializeTree();
   }
 
   #initializeTree() {
@@ -231,7 +238,7 @@ export class NoteElement extends HTMLElement {
         anchor.target = "_blank";
 
         if (anchor.matches(".u-url.mention")) {
-          const { acct } = target.mentions.find((m) =>
+          const { acct } = target.data.mentions.find((m) =>
             [m.acct, m.username].includes(anchor.textContent.slice(1))
           );
           anchor.href = computeLocalAcctUrl(this.domain, acct);

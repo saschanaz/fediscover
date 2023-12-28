@@ -25,7 +25,7 @@ async function renderRandomNotes(rediscover, parentElement) {
         view.remove();
         return;
       }
-      view.lang = note.language || "";
+      view.lang = note.data.language || "";
       view.note = note;
     });
   }

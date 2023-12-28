@@ -12,9 +12,11 @@ export default class MastodonApi {
   /**
    * @param {object} args
    * @param {*} args.masto
+   * @param {*} args.me
    */
-  constructor({ masto }) {
+  constructor({ masto, me }) {
     this.#masto = masto;
+    this.#me = me;
   }
 
   get origin() {
@@ -32,25 +34,65 @@ export default class MastodonApi {
    */
   static async login(args) {
     const masto = await login({ url: args.origin, accessToken: args.accessToken });
-    return new MastodonApi({ masto });
+    const me = await masto.accounts.verifyCredentials();
+    return new MastodonApi({ masto, me });
   }
 
   async allFollowings() {
     const result = [];
-    for await (const followers of this.masto.accounts.getFollowingIterable(
-      account.id,
+    for await (const followers of this.#masto.accounts.getFollowingIterable(
+      this.#me.id,
       { limit: 80 }
     )) {
       result.push(...followers);
     }
-    return result;
+    return result.map(remapUser);
   }
 
-  async notes() {
-    const notes = await this.masto.accounts.http.get(
-      `/api/v1/accounts/${id}/statuses?exclude_replies=true`
+  async notes(userId) {
+    const notes = await this.#masto.accounts.http.get(
+      `/api/v1/accounts/${userId}/statuses?exclude_replies=true`
     );
     return notes.map(n => new MastodonNote(this.origin, n));
+  }
+}
+
+function remapEmojis(emojis) {
+  return Object.fromEntries(emojis.map(e => [e.shortcode, e.staticUrl]))
+}
+
+function remapUser(user) {
+  return {
+    id: user.id,
+    updatedAt: user.lastStatusAt,
+    name: user.displayName,
+    username: user.username,
+    emojis: remapEmojis(user.emojis),
+    avatarUrl: user.avatarStatic,
+
+  }
+}
+
+function remapNote(note) {
+  return {
+    summary: note.spoilerText,
+    emojis: remapEmojis(note.emojis),
+    myReaction: note.favourited ? "♥️" : null,
+    reblogged: note.reblogged,
+    bookmarked: note.bookmarked,
+    userId: note.account.id,
+    text: note.content,
+    createdAt: note.createdAt,
+    language: note.language,
+    user: remapUser(note.account),
+    files: note.mediaAttachments.map(attachment => ({
+      type: `${attachment.type}/${attachment.url.match(/\.\w+/)[0]}`,
+      isSensitive: note.sensitive,
+      thumbnailUrl: attachment.previewUrl,
+      comment: attachment.description,
+      url: attachment.url,
+    })),
+    mentions: note.mentions,
   }
 }
 
@@ -58,22 +100,10 @@ class MastodonNote {
   #origin;
   #rawNote;
   #note;
-  constructor(note) {
+  constructor(origin, note) {
     this.#origin = origin;
     this.#rawNote = note;
-    this.#note = this.#remap(note);
-  }
-
-  #remap(note) {
-    return {
-      summary: note.spoilerText,
-      emojis: Object.fromEntries(note.emojis.map(e => [e.shortcode, e.staticUrl])),
-      myReaction: note.favourited ? "♥️" : null,
-      reblogged: note.reblogged,
-      bookmarked: note.bookmarked,
-      userId: note.user.id,
-      text: note.content,
-    }
+    this.#note = remapNote(note);
   }
 
   get data() {
@@ -86,6 +116,10 @@ class MastodonNote {
 
   get localUserUrl() {
     return new URL(`@${this.#rawNote.account.acct}/`, this.#origin).toString();
+  }
+
+  get atUser() {
+    return `@${this.#rawNote.account.acct}`
   }
 
   get renote() {

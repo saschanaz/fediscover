@@ -171,7 +171,18 @@ async function authorizeClicked() {
  * @param {Element} parentElement
  */
 export async function maybeAuthorizeViaForm(parentElement) {
-  const [app, token] = await idbKeyval.getMany(["app", "accessToken"]);
+  async function migrate() {
+    const [app, token] = await idbKeyval.getMany(["app", "accessToken"]);
+    await idbKeyval.setMany([
+      ["mastoRediscoverApp", app],
+      ["mastoRediscoverAccessToken", token],
+    ]);
+    await idbKeyval.delMany(["app", "accessToken"]);
+  }
+
+  await migrate();
+
+  const [app, token] = await idbKeyval.getMany(["mastoRediscoverApp", "mastoRediscoverAccessToken"]);
   if (app && token) {
     return await login({ app, accessToken: token });
   }

@@ -33,7 +33,7 @@ export class Rediscover {
     this.myself = null;
 
     // since previous week by default
-    this.since = since ?? new Date().valueOf() - 7 * 24 * 60 * 60 * 1000;
+    this.since = new Date().valueOf() - (since ?? 7) * 24 * 60 * 60 * 1000;
     this.noteCache = new Map();
     this.shown = new Set();
   }

@@ -3,7 +3,7 @@ html, body {
   height: 100%;
 }
 
-.masto-header {
+.masto-text, .masto-text a {
   color: #ffefef;
 }
 

@@ -50,7 +50,7 @@ export class Rediscover {
     return await this.fetchAllFollowings();
   }
 
-  async maybeFetchActiveFollowings({ max = 40 } = {}) {
+  async maybeFetchActiveFollowings({ max = 10 } = {}) {
     const followingsAll = await this.maybeFetchAllFollowings();
     return pickRandom(
       followingsAll.filter(

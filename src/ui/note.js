@@ -255,13 +255,13 @@ export class NoteElement extends HTMLElement {
         }
       }
 
-      if (!target.spoilerText) {
+      if (!target.data.cw) {
         return content;
       }
 
       return html`
         <details>
-          <summary>${target.spoilerText}</summary>
+          <summary>${target.data.cw}</summary>
           ${content}
         </details>
       `;

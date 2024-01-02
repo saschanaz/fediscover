@@ -74,7 +74,7 @@ function remapUser(user) {
 
 function remapNote(note) {
   return {
-    summary: note.spoilerText,
+    cw: note.spoilerText,
     emojis: remapEmojis(note.emojis),
     myReaction: note.favourited ? "♥️" : null,
     reblogged: note.reblogged,

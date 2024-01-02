@@ -20,7 +20,7 @@ async function renderRandomNotes(rediscover, parentElement) {
     parentElement.append(view);
 
     // lazy rendering
-    rediscover.maybeFetchRandomNoteFromUser(following.id).then((note) => {
+    rediscover.maybeFetchRandomUnreadNoteFromUser(following.id).then((note) => {
       if (!note) {
         view.remove();
         return;

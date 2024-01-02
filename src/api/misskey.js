@@ -96,11 +96,11 @@ class MisskeyNote {
   }
 
   get localUrl() {
-    return new URL(`notes/${this.#note.id}`, this.#origin);
+    return new URL(`notes/${this.#note.id}`, this.#origin).toString();
   }
 
   get localUserUrl() {
-    return new URL(this.atUser, this.#origin);
+    return new URL(this.atUser, this.#origin).toString();
   }
 
   get atUser() {

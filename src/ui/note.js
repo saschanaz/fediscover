@@ -103,7 +103,6 @@ const style = html`
     }
 
     .emoji {
-      width: 1.2em;
       height: 1.2em;
       vertical-align: text-bottom;
     }

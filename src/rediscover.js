@@ -34,8 +34,11 @@ export class Rediscover {
 
     // since previous week by default
     this.since = new Date().valueOf() - (since ?? 7) * 24 * 60 * 60 * 1000;
+    // user to notes map
     this.noteCache = new Map();
-    this.shown = new Set();
+    this.shownNotes = new Set();
+    // Users with no unread notes
+    this.drainedUsers = new Set();
   }
 
   async fetchAllFollowings() {
@@ -54,7 +57,7 @@ export class Rediscover {
     const followingsAll = await this.maybeFetchAllFollowings();
     return pickRandom(
       followingsAll.filter(
-        (f) => new Date(f.updatedAt).valueOf() > this.since
+        (f) => new Date(f.updatedAt).valueOf() > this.since && !this.drainedUsers.has(f.id)
       ),
       max
     );
@@ -69,11 +72,13 @@ export class Rediscover {
       this.noteCache.get(id) ?? (await this.api.notes(id));
     this.noteCache.set(id, notes);
     const picked = pickRandom(
-      notes.filter((n) => !this.shown.has(n.renote?.localUrl ?? n.localUrl) && isRecentUnreadNote(n, this.since, myself.id)),
+      notes.filter((n) => !this.shownNotes.has(n.renote?.localUrl ?? n.localUrl) && isRecentUnreadNote(n, this.since, myself.id)),
       1
     )[0];
     if (picked) {
-      this.shown.add(picked.renote?.localUrl ?? picked.localUrl);
+      this.shownNotes.add(picked.renote?.localUrl ?? picked.localUrl);
+    } else {
+      this.drainedUsers.add(id);
     }
     return picked;
   }

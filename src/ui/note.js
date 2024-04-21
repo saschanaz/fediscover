@@ -23,7 +23,7 @@ const style = html`
     :host {
       display: flow-root;
       padding: 0 1rem;
-      background-color: white;
+      background-color: #eee;
       border-radius: 0.375rem;
     }
 

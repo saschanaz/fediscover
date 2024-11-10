@@ -1,6 +1,7 @@
 html, body {
   background-color: #4d1212;
   height: 100%;
+  color-scheme: light dark;
 }
 
 .masto-text, .masto-text a {

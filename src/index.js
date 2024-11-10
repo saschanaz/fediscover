@@ -63,6 +63,12 @@ async function getSinceDaysAgoValue() {
 async function main() {
   apiReady = maybeAuthorizeViaForm(document.body);
 
+  const colorMode = globalThis.matchMedia("(prefers-color-scheme: dark)")
+    .matches
+    ? "dark"
+    : "light";
+  document.documentElement.dataset.bsTheme = colorMode;
+
   const api = await apiReady;
   const since = await getSinceDaysAgoValue();
 

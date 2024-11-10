@@ -27,6 +27,12 @@ const style = html`
       border-radius: 0.375rem;
     }
 
+    @media (prefers-color-scheme: dark) {
+      :host {
+        background-color: black;
+      }
+    }
+
     .placeholder {
       display: inline-block;
       min-height: 1em;

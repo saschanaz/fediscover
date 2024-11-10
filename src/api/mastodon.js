@@ -92,6 +92,7 @@ function remapNote(note) {
       url: attachment.url,
     })),
     mentions: note.mentions,
+    id: note.id,
   }
 }
 

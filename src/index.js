@@ -14,12 +14,20 @@ async function renderRandomNotes(rediscover, parentElement) {
   // clear the element
   parentElement.replaceChildren();
 
+  /** @type {Promise[]} */
+  const promiseNotes = [];
+
   for (const following of await rediscover.maybeFetchActiveFollowings()) {
     const view = new NoteElement(rediscover.api.origin, following);
     parentElement.append(view);
 
+    const promiseNote = rediscover.maybeFetchRandomUnreadNoteFromUser(
+      following.id
+    );
+    promiseNotes.push(promiseNote);
+
     // lazy rendering
-    rediscover.maybeFetchRandomUnreadNoteFromUser(following.id).then((note) => {
+    promiseNote.then((note) => {
       if (!note) {
         view.remove();
         return;
@@ -28,6 +36,15 @@ async function renderRandomNotes(rediscover, parentElement) {
       view.note = note;
     });
   }
+
+  const noteIds = await Promise.all(promiseNotes).then((notes) =>
+    notes.filter((n) => n).map((n) => n.data.id)
+  );
+  const url = new URL(".", location.href);
+  for (const noteId of noteIds) {
+    url.searchParams.append("noteId", noteId);
+  }
+  history.pushState({}, null, url.href);
 }
 
 /**

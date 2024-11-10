@@ -3,24 +3,28 @@
 // 2. Followings (/api/v1/accounts/:id/following)
 // 3. Statuses of any accounts (/api/v1/accounts/:id/statuses)
 
-import { login } from "https://cdn.jsdelivr.net/npm/masto@4/+esm";
+import { createRestAPIClient } from "https://cdn.jsdelivr.net/npm/masto@6/+esm";
 
 export default class MastodonApi {
   #masto;
   #me;
+  #origin;
+  #accessToken;
 
   /**
    * @param {object} args
    * @param {*} args.masto
-   * @param {*} args.me
+   * @param {string} args.origin
+   * @param {string} args.accessToken
    */
-  constructor({ masto, me }) {
-    this.#masto = masto;
-    this.#me = me;
+  constructor({ origin, accessToken }) {
+    this.#masto = createRestAPIClient({ url: origin, accessToken });
+    this.#origin = origin;
+    this.#accessToken = accessToken;
   }
 
   get origin() {
-    return this.#masto.config.url;
+    return this.#origin;
   }
 
   get me() {
@@ -33,15 +37,14 @@ export default class MastodonApi {
    * @param {string} args.accessToken
    */
   static async login(args) {
-    const masto = await login({ url: args.origin, accessToken: args.accessToken });
-    const me = await masto.accounts.verifyCredentials();
-    return new MastodonApi({ masto, me });
+    const mastodon = new MastodonApi(args);
+    mastodon.#me = await mastodon.#api("v1/accounts/verify_credentials", "get");
+    return mastodon;
   }
 
   async allFollowings() {
     const result = [];
-    for await (const followers of this.#masto.accounts.getFollowingIterable(
-      this.#me.id,
+    for await (const followers of this.#masto.v1.accounts.$select(this.#me.id).following.list(
       { limit: 80 }
     )) {
       result.push(...followers);
@@ -49,26 +52,45 @@ export default class MastodonApi {
     return result.map(remapUser);
   }
 
+  #createRequest(path, method, options = {}) {
+    const url = new URL(path, new URL("/api/", this.#origin));
+    for (const [key, value] of Object.entries(options)) {
+      url.searchParams.set(key, value);
+    }
+    return new Request(url, {
+      method,
+      headers: {
+        Authorization: `Bearer ${this.#accessToken}`,
+        "Content-Type": "application/json",
+      }
+    });
+  }
+
+  async #api(path, method, options = {}) {
+    const response = await fetch(this.#createRequest(path, method, options));
+    return await response.json();
+  }
+
   async notes(userId) {
-    const notes = await this.#masto.accounts.http.get(
-      `/api/v1/accounts/${userId}/statuses?exclude_replies=true`
-    );
-    return notes.map(n => new MastodonNote(this.origin, n));
+    const notes = await this.#api(`v1/accounts/${userId}/statuses`, "get", {
+      exclude_replies: true
+    });
+    return notes.map(n => new MastodonNote(this.#origin, n));
   }
 }
 
 function remapEmojis(emojis) {
-  return Object.fromEntries(emojis.map(e => [e.shortcode, e.staticUrl]))
+  return Object.fromEntries(emojis.map(e => [e.shortcode, e.static_url]))
 }
 
 function remapUser(user) {
   return {
     id: user.id,
-    updatedAt: user.lastStatusAt,
-    name: user.displayName,
+    updatedAt: user.last_status_at || user.lastStatusAt,
+    name: user.display_name,
     username: user.username,
     emojis: remapEmojis(user.emojis),
-    avatarUrl: user.avatarStatic,
+    avatarUrl: user.avatar_static,
   }
 }
 
@@ -81,13 +103,13 @@ function remapNote(note) {
     bookmarked: note.bookmarked,
     userId: note.account.id,
     text: note.content,
-    createdAt: note.createdAt,
+    createdAt: note.created_at,
     language: note.language,
     user: remapUser(note.account),
-    files: note.mediaAttachments.map(attachment => ({
+    files: note.media_attachments.map(attachment => ({
       type: `${attachment.type}/${attachment.url.match(/\.\w+/)[0]}`,
       isSensitive: note.sensitive,
-      thumbnailUrl: attachment.previewUrl,
+      thumbnailUrl: attachment.preview_url,
       comment: attachment.description,
       url: attachment.url,
     })),

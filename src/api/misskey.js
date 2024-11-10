@@ -26,8 +26,8 @@ export default class MisskeyApi {
     return this.#me;
   }
 
-  async #api(path, options = {}) {
-    const response = await fetch(new URL(path, new URL("/api/", this.#origin)), {
+  #createRequest(path, options = {}) {
+    return new Request(new URL(path, new URL("/api/", this.#origin)), {
       method: "post",
       headers: {
         Authorization: `Bearer ${this.#accessToken}`,
@@ -35,7 +35,10 @@ export default class MisskeyApi {
       },
       body: JSON.stringify(options)
     });
+  }
 
+  async #api(path, options = {}) {
+    const response = await fetch(this.#createRequest(path, options));
     return await response.json();
   }
 

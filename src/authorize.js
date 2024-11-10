@@ -122,7 +122,7 @@ export async function getOrFetchAppData(domain, redirectUri, scopes, nodeInfo) {
 
   const masto = await mastoLogin({ url: domain });
   const created = await masto.apps.create({
-    clientName: "MastoRediscover",
+    clientName: "Fediscover",
     redirectUris: redirectUri,
     scopes: scopes.join(" "),
     website: domain,
